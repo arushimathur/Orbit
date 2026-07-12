@@ -4,12 +4,14 @@ import {
   CircleMember,
   CreateCircleDto,
   CreateLocationPingDto,
+  ForgotPasswordDto,
   JoinCircleDto,
   LoginDto,
   LocationPing,
   MemberLocation,
   PublicUser,
   RegisterDto,
+  ResetPasswordDto,
 } from "@orbit/shared";
 import { apiFetch } from "./client";
 import { tokenStore } from "./tokenStore";
@@ -28,6 +30,14 @@ export async function login(dto: LoginDto): Promise<AuthResponse> {
 
 export async function logout(): Promise<void> {
   await tokenStore.clear();
+}
+
+export function forgotPassword(dto: ForgotPasswordDto): Promise<void> {
+  return apiFetch<void>("/auth/forgot-password", { method: "POST", body: dto, auth: false });
+}
+
+export function resetPassword(dto: ResetPasswordDto): Promise<void> {
+  return apiFetch<void>("/auth/reset-password", { method: "POST", body: dto, auth: false });
 }
 
 export function me(): Promise<PublicUser> {

@@ -1,16 +1,14 @@
 import React, { useState } from "react";
 import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useAuth } from "../auth/AuthContext";
+import { forgotPassword } from "../api/endpoints";
 import { ApiError } from "../api/client";
 import type { AuthStackParamList } from "../navigation/RootNavigator";
 
-type Props = NativeStackScreenProps<AuthStackParamList, "Login">;
+type Props = NativeStackScreenProps<AuthStackParamList, "ForgotPassword">;
 
-export default function LoginScreen({ navigation }: Props) {
-  const { login } = useAuth();
+export default function ForgotPasswordScreen({ navigation }: Props) {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -18,7 +16,8 @@ export default function LoginScreen({ navigation }: Props) {
     setError(null);
     setIsSubmitting(true);
     try {
-      await login({ email, password });
+      await forgotPassword({ email });
+      navigation.navigate("ResetPassword", { email });
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Something went wrong");
     } finally {
@@ -28,7 +27,8 @@ export default function LoginScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Orbit</Text>
+      <Text style={styles.title}>Reset your password</Text>
+      <Text style={styles.subtitle}>We&apos;ll email you a 6-digit code to reset your password.</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -37,29 +37,22 @@ export default function LoginScreen({ navigation }: Props) {
         value={email}
         onChangeText={setEmail}
       />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
       {error && <Text style={styles.error}>{error}</Text>}
       {isSubmitting ? (
         <ActivityIndicator />
       ) : (
-        <Button title="Log in" onPress={onSubmit} disabled={!email || !password} />
+        <Button title="Send code" onPress={onSubmit} disabled={!email} />
       )}
-      <Button title="Forgot password?" onPress={() => navigation.navigate("ForgotPassword")} />
       <View style={styles.spacer} />
-      <Button title="Create an account" onPress={() => navigation.navigate("Register")} />
+      <Button title="Back to login" onPress={() => navigation.navigate("Login")} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: "center", padding: 24 },
-  title: { fontSize: 28, fontWeight: "700", marginBottom: 32, textAlign: "center" },
+  title: { fontSize: 24, fontWeight: "700", marginBottom: 12, textAlign: "center" },
+  subtitle: { fontSize: 14, color: "#666", marginBottom: 24, textAlign: "center" },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
