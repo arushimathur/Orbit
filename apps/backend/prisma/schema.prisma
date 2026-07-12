@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Plain Postgres for now -- Phase 1 only stores lat/lng as floats. PostGIS
+// (for efficient geofence "point in radius" queries) comes back in Phase 2
+// when Places/geofencing actually need it; that's a one-line schema addition.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CircleRole {
+  owner
+  member
+}
+
+model User {
+  id             String          @id @default(uuid())
+  name           String
+  email          String          @unique
+  passwordHash   String
+  avatarUrl      String?
+  createdAt      DateTime        @default(now())
+  refreshTokens  RefreshToken[]
+  circleMembers  CircleMember[]
+  locationPings  LocationPing[]
+  ownedCircles   Circle[]        @relation("CircleOwner")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  @@index([userId])
+}
+
+model Circle {
+  id         String         @id @default(uuid())
+  name       String
+  inviteCode String         @unique
+  createdBy  String
+  owner      User           @relation("CircleOwner", fields: [createdBy], references: [id])
+  createdAt  DateTime       @default(now())
+  members    CircleMember[]
+}
+
+model CircleMember {
+  circleId String
+  userId   String
+  role     CircleRole @default(member)
+  joinedAt DateTime   @default(now())
+
+  circle Circle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([circleId, userId])
+  @@index([userId])
+}
+
+// Every ping is retained (not just the latest) so Phase 2/3 history & driving-report
+// features can query past pings without a schema change.
+model LocationPing {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lat        Float
+  lng        Float
+  accuracyM  Float?
+  speedMps   Float?
+  heading    Float?
+  batteryPct Float?
+  recordedAt DateTime
+  createdAt  DateTime @default(now())
+
+  @@index([userId, recordedAt(sort: Desc)])
+}

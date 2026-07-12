@@ -1,0 +1,16 @@
+{
+  "name": "fetchlocation",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "postinstall": "npm run build --workspace=@fetchlocation/shared",
+    "backend:dev": "npm run start:dev --workspace=@fetchlocation/backend",
+    "web:dev": "npm run dev --workspace=@fetchlocation/web",
+    "mobile:start": "npm run start --workspace=@fetchlocation/mobile",
+    "shared:build": "npm run build --workspace=@fetchlocation/shared"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "FetchLocation",
+    "slug": "fetchlocation",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fetchlocation.app",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location"
+        ],
+        "NSLocationWhenInUseUsageDescription": "FetchLocation needs your location to show you on the map to your circle.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "FetchLocation needs background location so your circle can see your location even when the app is closed."
+      }
+    },
+    "android": {
+      "package": "com.fetchlocation.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "FetchLocation needs background location so your circle can see your location even when the app is closed."
+        }
+      ],
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "30a1ba37-672b-4c10-be81-9e99d673c0f9"
+      }
+    }
+  }
+}
