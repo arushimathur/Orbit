@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
 import MapLibreGL from "@maplibre/maplibre-react-native";
-import { LocationUpdateEvent, MemberLocation, SOCKET_EVENTS } from "@orbit/shared";
+import { LocationUpdateEvent, MemberLocation } from "@orbit/shared";
 import { useCircle } from "../circle/CircleContext";
 import * as api from "../api/endpoints";
-import { connectSocket, disconnectSocket, joinCircleRoom } from "../api/socket";
+import { subscribeToCircleEvents } from "../api/sse";
 import { startBackgroundLocationTracking } from "../location/backgroundLocationTask";
 import { MAP_STYLE_URL } from "../config";
 
@@ -39,22 +39,17 @@ export default function MapScreen() {
         Alert.alert("Location tracking error", err instanceof Error ? err.message : String(err));
       });
 
-    let cleanupSocket: (() => void) | undefined;
+    let cleanupSse: (() => void) | undefined;
     (async () => {
-      const socket = await connectSocket();
-      joinCircleRoom(circle.id);
       const onLocationUpdate = (event: LocationUpdateEvent) => {
-        if (event.circleId !== circle.id) return;
         setMemberLocations((prev) => ({ ...prev, [event.user.id]: { user: event.user, ping: event.ping } }));
       };
-      socket.on(SOCKET_EVENTS.LOCATION_UPDATE, onLocationUpdate);
-      cleanupSocket = () => socket.off(SOCKET_EVENTS.LOCATION_UPDATE, onLocationUpdate);
+      cleanupSse = await subscribeToCircleEvents(circle.id, onLocationUpdate);
     })();
 
     return () => {
       isMounted = false;
-      cleanupSocket?.();
-      disconnectSocket();
+      cleanupSse?.();
     };
   }, [circle?.id]);
 

@@ -3,14 +3,14 @@ import { CreateLocationPingDto, LocationPing, MemberLocation } from "@orbit/shar
 import { PrismaService } from "../prisma/prisma.service";
 import { toPublicUser } from "../common/public-user.mapper";
 import { CirclesService } from "../circles/circles.service";
-import { RealtimeGateway } from "../realtime/realtime.gateway";
+import { RealtimeService } from "../realtime/realtime.service";
 
 @Injectable()
 export class LocationsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly circlesService: CirclesService,
-    private readonly realtimeGateway: RealtimeGateway,
+    private readonly realtimeService: RealtimeService,
   ) {}
 
   async create(userId: string, dto: CreateLocationPingDto): Promise<LocationPing> {
@@ -34,7 +34,7 @@ export class LocationsService {
     // scoped to one circle — matches the mental model of "my location", not "my circle's location").
     const circleIds = await this.circlesService.listCircleIdsForUser(userId);
     for (const circleId of circleIds) {
-      this.realtimeGateway.broadcastLocationUpdate(circleId, {
+      this.realtimeService.broadcastLocationUpdate(circleId, {
         circleId,
         user: toPublicUser(user),
         ping: publicPing,

@@ -49,8 +49,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "30a1ba37-672b-4c10-be81-9e99d673c0f9"
+        "projectId": "06f1a52a-37cb-439b-898e-fe649fc0560f"
       }
-    }
+    },
+    "owner": "arushimathur_17"
   }
 }

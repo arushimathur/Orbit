@@ -5,8 +5,8 @@ import { JwtService } from "@nestjs/jwt";
 export const ACCESS_JWT_SERVICE = "ACCESS_JWT_SERVICE";
 export const REFRESH_JWT_SERVICE = "REFRESH_JWT_SERVICE";
 
-// Two separately-configured JwtService instances (different secrets/lifetimes) shared
-// by AuthService (signs both) and RealtimeGateway (verifies access tokens on socket connect).
+// Two separately-configured JwtService instances (different secrets/lifetimes),
+// injected by token into AuthService, which signs both.
 @Module({
   imports: [ConfigModule],
   providers: [
