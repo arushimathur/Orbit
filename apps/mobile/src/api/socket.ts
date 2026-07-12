@@ -1,5 +1,5 @@
 import { io, Socket } from "socket.io-client";
-import { SOCKET_EVENTS } from "@fetchlocation/shared";
+import { SOCKET_EVENTS } from "@orbit/shared";
 import { API_URL } from "../config";
 import { tokenStore } from "./tokenStore";
 

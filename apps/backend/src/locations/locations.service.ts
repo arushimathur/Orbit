@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { CreateLocationPingDto, LocationPing, MemberLocation } from "@fetchlocation/shared";
+import { CreateLocationPingDto, LocationPing, MemberLocation } from "@orbit/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { toPublicUser } from "../common/public-user.mapper";
 import { CirclesService } from "../circles/circles.service";

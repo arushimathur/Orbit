@@ -1,5 +1,5 @@
 import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
-import { Circle, CircleMember, CreateCircleDto, JoinCircleDto } from "@fetchlocation/shared";
+import { Circle, CircleMember, CreateCircleDto, JoinCircleDto } from "@orbit/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { toPublicUser } from "../common/public-user.mapper";
 

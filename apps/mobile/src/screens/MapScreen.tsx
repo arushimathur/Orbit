@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
 import MapLibreGL from "@maplibre/maplibre-react-native";
-import { LocationUpdateEvent, MemberLocation, SOCKET_EVENTS } from "@fetchlocation/shared";
+import { LocationUpdateEvent, MemberLocation, SOCKET_EVENTS } from "@orbit/shared";
 import { useCircle } from "../circle/CircleContext";
 import * as api from "../api/endpoints";
 import { connectSocket, disconnectSocket, joinCircleRoom } from "../api/socket";

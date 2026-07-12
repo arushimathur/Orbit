@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import * as SecureStore from "expo-secure-store";
-import { Circle } from "@fetchlocation/shared";
+import { Circle } from "@orbit/shared";
 
-const ACTIVE_CIRCLE_KEY = "fetchlocation_active_circle";
+const ACTIVE_CIRCLE_KEY = "orbit_active_circle";
 
 interface CircleContextValue {
   circle: Circle | null;

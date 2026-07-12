@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "FetchLocation",
-    "slug": "fetchlocation",
+    "name": "Orbit",
+    "slug": "orbit",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
@@ -10,17 +10,17 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.fetchlocation.app",
+      "bundleIdentifier": "com.orbit.app",
       "infoPlist": {
         "UIBackgroundModes": [
           "location"
         ],
-        "NSLocationWhenInUseUsageDescription": "FetchLocation needs your location to show you on the map to your circle.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "FetchLocation needs background location so your circle can see your location even when the app is closed."
+        "NSLocationWhenInUseUsageDescription": "Orbit needs your location to show you on the map to your circle.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Orbit needs background location so your circle can see your location even when the app is closed."
       }
     },
     "android": {
-      "package": "com.fetchlocation.app",
+      "package": "com.orbit.app",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
@@ -34,7 +34,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "FetchLocation needs background location so your circle can see your location even when the app is closed."
+          "locationAlwaysAndWhenInUsePermission": "Orbit needs background location so your circle can see your location even when the app is closed."
         }
       ],
       "@maplibre/maplibre-react-native",

@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
-import { CreateLocationPingDto, createLocationPingDtoSchema } from "@fetchlocation/shared";
+import { CreateLocationPingDto, createLocationPingDtoSchema } from "@orbit/shared";
 import { LocationsService } from "./locations.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { AuthenticatedUser, CurrentUser } from "../common/current-user.decorator";

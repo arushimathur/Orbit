@@ -16,6 +16,6 @@ config.resolver.nodeModulesPaths = [
 // normal upward node_modules walk entirely, which also breaks resolution of a dependency's
 // own *nested* node_modules (e.g. @maplibre/maplibre-react-native/node_modules/@turf/helpers,
 // which isn't hoisted to the workspace root). The two extra nodeModulesPaths above are enough
-// to additionally find hoisted workspace packages like @fetchlocation/shared.
+// to additionally find hoisted workspace packages like @orbit/shared.
 
 module.exports = config;

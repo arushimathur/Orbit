@@ -9,7 +9,7 @@ import {
 } from "@nestjs/websockets";
 import { JwtService } from "@nestjs/jwt";
 import { Server, Socket } from "socket.io";
-import { JoinCircleEvent, joinCircleEventSchema, LocationUpdateEvent, SOCKET_EVENTS } from "@fetchlocation/shared";
+import { JoinCircleEvent, joinCircleEventSchema, LocationUpdateEvent, SOCKET_EVENTS } from "@orbit/shared";
 import { ACCESS_JWT_SERVICE } from "../common/token.module";
 import { JwtAccessPayload } from "../auth/jwt-payload.interface";
 import { CirclesService } from "../circles/circles.service";

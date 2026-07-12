@@ -10,7 +10,7 @@ import {
   MemberLocation,
   PublicUser,
   RegisterDto,
-} from "@fetchlocation/shared";
+} from "@orbit/shared";
 import { apiFetch } from "./client";
 import { tokenStore } from "./tokenStore";
 

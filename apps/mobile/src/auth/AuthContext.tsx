@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { LoginDto, PublicUser, RegisterDto } from "@fetchlocation/shared";
+import { LoginDto, PublicUser, RegisterDto } from "@orbit/shared";
 import * as api from "../api/endpoints";
 import { tokenStore } from "../api/tokenStore";
 

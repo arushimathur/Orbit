@@ -28,7 +28,7 @@ export default function LoginScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>FetchLocation</Text>
+      <Text style={styles.title}>Orbit</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"

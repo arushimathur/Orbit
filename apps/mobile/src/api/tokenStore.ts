@@ -1,7 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 
-const ACCESS_TOKEN_KEY = "fetchlocation_access_token";
-const REFRESH_TOKEN_KEY = "fetchlocation_refresh_token";
+const ACCESS_TOKEN_KEY = "orbit_access_token";
+const REFRESH_TOKEN_KEY = "orbit_refresh_token";
 
 export const tokenStore = {
   async getAccessToken() {

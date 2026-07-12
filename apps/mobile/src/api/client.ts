@@ -1,4 +1,4 @@
-import { AuthTokens } from "@fetchlocation/shared";
+import { AuthTokens } from "@orbit/shared";
 import { API_URL } from "../config";
 import { tokenStore } from "./tokenStore";
 

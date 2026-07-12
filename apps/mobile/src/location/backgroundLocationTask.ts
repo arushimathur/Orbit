@@ -3,7 +3,7 @@ import * as TaskManager from "expo-task-manager";
 import * as Battery from "expo-battery";
 import { postLocation } from "../api/endpoints";
 
-export const BACKGROUND_LOCATION_TASK = "fetchlocation-background-location";
+export const BACKGROUND_LOCATION_TASK = "orbit-background-location";
 
 // The OS-level watcher below reports at most every 20s / 15m moved. On top of that,
 // while the user is essentially stationary we further throttle posts to once every
@@ -93,7 +93,7 @@ export async function startBackgroundLocationTracking(): Promise<LocationTrackin
       distanceInterval: 15,
       showsBackgroundLocationIndicator: true,
       foregroundService: {
-        notificationTitle: "FetchLocation is sharing your location",
+        notificationTitle: "Orbit is sharing your location",
         notificationBody: "Your circle can see your location while this is on.",
       },
     });

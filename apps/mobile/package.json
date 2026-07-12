@@ -1,5 +1,5 @@
 {
-  "name": "@fetchlocation/mobile",
+  "name": "@orbit/mobile",
   "version": "0.1.0",
   "private": true,
   "main": "index.js",
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@fetchlocation/shared": "*",
+    "@orbit/shared": "*",
     "@maplibre/maplibre-react-native": "10.4.2",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.11.0",

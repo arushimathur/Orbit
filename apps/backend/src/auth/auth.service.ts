@@ -2,7 +2,7 @@ import { ConflictException, Inject, Injectable, UnauthorizedException } from "@n
 import { JwtService } from "@nestjs/jwt";
 import * as argon2 from "argon2";
 import { createHash, randomUUID } from "crypto";
-import { AuthResponse, AuthTokens, LoginDto, RefreshDto, RegisterDto } from "@fetchlocation/shared";
+import { AuthResponse, AuthTokens, LoginDto, RefreshDto, RegisterDto } from "@orbit/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { toPublicUser } from "../common/public-user.mapper";
 import { ACCESS_JWT_SERVICE, REFRESH_JWT_SERVICE } from "../common/token.module";

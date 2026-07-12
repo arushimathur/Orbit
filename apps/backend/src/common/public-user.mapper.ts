@@ -1,4 +1,4 @@
-import { PublicUser } from "@fetchlocation/shared";
+import { PublicUser } from "@orbit/shared";
 import { User } from "@prisma/client";
 
 export function toPublicUser(user: User): PublicUser {

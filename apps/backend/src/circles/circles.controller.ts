@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
-import { CreateCircleDto, createCircleDtoSchema, JoinCircleDto, joinCircleDtoSchema } from "@fetchlocation/shared";
+import { CreateCircleDto, createCircleDtoSchema, JoinCircleDto, joinCircleDtoSchema } from "@orbit/shared";
 import { CirclesService } from "./circles.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { CurrentUser, AuthenticatedUser } from "../common/current-user.decorator";

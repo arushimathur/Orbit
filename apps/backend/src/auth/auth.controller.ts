@@ -6,7 +6,7 @@ import {
   refreshDtoSchema,
   RegisterDto,
   registerDtoSchema,
-} from "@fetchlocation/shared";
+} from "@orbit/shared";
 import { AuthService } from "./auth.service";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
 import { JwtAuthGuard } from "./jwt-auth.guard";

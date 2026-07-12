@@ -1,5 +1,5 @@
 {
-  "name": "@fetchlocation/backend",
+  "name": "@orbit/backend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,7 +12,7 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
-    "@fetchlocation/shared": "*",
+    "@orbit/shared": "*",
     "@nestjs/common": "^10.4.4",
     "@nestjs/config": "^3.3.0",
     "@nestjs/core": "^10.4.4",
