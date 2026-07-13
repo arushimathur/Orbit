@@ -1,19 +1,30 @@
 import { ConflictException, Inject, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import * as argon2 from "argon2";
-import { createHash, randomUUID } from "crypto";
-import { AuthResponse, AuthTokens, LoginDto, RefreshDto, RegisterDto } from "@orbit/shared";
+import { createHash, randomInt, randomUUID } from "crypto";
+import {
+  AuthResponse,
+  AuthTokens,
+  ForgotPasswordDto,
+  LoginDto,
+  RefreshDto,
+  RegisterDto,
+  ResetPasswordDto,
+} from "@orbit/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { toPublicUser } from "../common/public-user.mapper";
 import { ACCESS_JWT_SERVICE, REFRESH_JWT_SERVICE } from "../common/token.module";
 import { JwtRefreshPayload } from "./jwt-payload.interface";
+import { MailService } from "../mail/mail.service";
 
 const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const PASSWORD_RESET_TOKEN_TTL_MS = 15 * 60 * 1000;
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly mail: MailService,
     @Inject(ACCESS_JWT_SERVICE) private readonly accessJwt: JwtService,
     @Inject(REFRESH_JWT_SERVICE) private readonly refreshJwt: JwtService,
   ) {}
@@ -61,6 +72,52 @@ export class AuthService {
     });
 
     return this.issueTokens(payload.sub);
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    if (!user) {
+      return;
+    }
+
+    await this.prisma.passwordResetToken.deleteMany({ where: { userId: user.id, usedAt: null } });
+
+    const code = randomInt(0, 1_000_000).toString().padStart(6, "0");
+    await this.prisma.passwordResetToken.create({
+      data: {
+        userId: user.id,
+        codeHash: this.hashToken(code),
+        expiresAt: new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MS),
+      },
+    });
+
+    await this.mail.sendPasswordResetCode(user.email, code);
+  }
+
+  async resetPassword(dto: ResetPasswordDto): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    const invalid = () => new UnauthorizedException("Invalid or expired reset code");
+    if (!user) {
+      throw invalid();
+    }
+
+    const token = await this.prisma.passwordResetToken.findFirst({
+      where: { userId: user.id, usedAt: null, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: "desc" },
+    });
+    if (!token || token.codeHash !== this.hashToken(dto.code)) {
+      throw invalid();
+    }
+
+    const passwordHash = await argon2.hash(dto.newPassword);
+    await this.prisma.$transaction([
+      this.prisma.user.update({ where: { id: user.id }, data: { passwordHash } }),
+      this.prisma.passwordResetToken.update({ where: { id: token.id }, data: { usedAt: new Date() } }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId: user.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
   }
 
   private async issueTokens(userId: string): Promise<AuthTokens> {

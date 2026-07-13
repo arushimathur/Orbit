@@ -4,9 +4,10 @@ import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { JwtStrategy } from "./jwt.strategy";
 import { TokenModule } from "../common/token.module";
+import { MailModule } from "../mail/mail.module";
 
 @Module({
-  imports: [PassportModule, TokenModule],
+  imports: [PassportModule, TokenModule, MailModule],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
   exports: [AuthService],

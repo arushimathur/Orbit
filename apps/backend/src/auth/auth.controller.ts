@@ -1,11 +1,15 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from "@nestjs/common";
 import {
+  ForgotPasswordDto,
+  forgotPasswordDtoSchema,
   LoginDto,
   loginDtoSchema,
   RefreshDto,
   refreshDtoSchema,
   RegisterDto,
   registerDtoSchema,
+  ResetPasswordDto,
+  resetPasswordDtoSchema,
 } from "@orbit/shared";
 import { AuthService } from "./auth.service";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
@@ -36,6 +40,18 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   refresh(@Body(new ZodValidationPipe(refreshDtoSchema)) dto: RefreshDto) {
     return this.authService.refresh(dto);
+  }
+
+  @Post("forgot-password")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  forgotPassword(@Body(new ZodValidationPipe(forgotPasswordDtoSchema)) dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  @Post("reset-password")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  resetPassword(@Body(new ZodValidationPipe(resetPasswordDtoSchema)) dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
   }
 
   @Get("me")

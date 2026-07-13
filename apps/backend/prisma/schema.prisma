@@ -26,6 +26,7 @@ model User {
   circleMembers  CircleMember[]
   locationPings  LocationPing[]
   ownedCircles   Circle[]        @relation("CircleOwner")
+  passwordResetTokens PasswordResetToken[]
 }
 
 model RefreshToken {
@@ -36,6 +37,18 @@ model RefreshToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
   revokedAt DateTime?
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  codeHash  String
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  usedAt    DateTime?
 
   @@index([userId])
 }
