@@ -35,9 +35,13 @@ If Postgres was already installed on your machine before this project, run `pg_l
 
 All three give you the same connection string used below: `postgresql://orbit:orbit@localhost:5432/orbit`.
 
+## Email (forgot/reset password)
+
+"Forgot password" emails a 6-digit one-time code (self-generated and verified entirely by our own backend — no third-party auth/identity provider involved) via SMTP. The backend needs real `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`/`SMTP_FROM` values in `.env` to even start, since `MailService` validates them eagerly at boot. Any SMTP relay works — a free-tier transactional provider (Brevo, Mailgun, SES, etc.) or your own mail server; for local testing something like [Ethereal](https://ethereal.email) (throwaway inbox, no real delivery) also works.
+
 ## First-time setup
 
-1. `cp .env.example .env` and fill in the two JWT secrets (random strings, e.g. `openssl rand -hex 32`).
+1. `cp .env.example .env` and fill in the two JWT secrets (random strings, e.g. `openssl rand -hex 32`) and the `SMTP_*` values (see below — these aren't optional, the backend won't start without them).
 2. `npm install` at the repo root (installs all workspaces).
 3. Create the initial database schema (only needed once, and again any time you change `apps/backend/prisma/schema.prisma`):
    ```
@@ -102,6 +106,7 @@ Once Android works, the iPhone build (same steps but `--platform ios`, which nee
 
 ## Gotchas hit in practice (and already fixed/documented here)
 
+- **Missing `SMTP_*` env vars crash the whole backend at startup, not just the forgot-password endpoint.** `MailService`'s constructor calls `ConfigService.getOrThrow` for each `SMTP_*` var, and Nest instantiates every provider (including ones no request has touched yet) when the app boots. If you don't need real email delivery yet, point `SMTP_HOST` at a throwaway service like Ethereal rather than leaving it unset.
 - **`packages/shared` needs a build step, and its output (`dist/`) is gitignored.** A fresh checkout (or an EAS Build server, which archives the project respecting `.gitignore`) won't have it unless something rebuilds it. Fixed with a root-level `postinstall` script (`npm run build --workspace=@orbit/shared`) that runs automatically after every `npm install`, anywhere.
 - **`apps/mobile/.env` is also gitignored**, so EAS Build's cloud archive never includes it either — a build kicked off without registering `EXPO_PUBLIC_API_URL` via `eas env:create` first will silently fall back to `http://localhost:3000` in the built APK. See the EAS section above.
 - **Running the backend under WSL2**: your phone needs your Windows machine's LAN IP (from Windows' own `ipconfig`), not the WSL-internal IP (from `hostname -I` inside WSL) — they're different networks. WSL2 only auto-forwards `localhost` traffic into the WSL VM, not traffic arriving on the LAN-facing adapter, so exposing a WSL-hosted server to your phone over WiFi needs a manual Windows-side port proxy + firewall rule (as Administrator PowerShell):
