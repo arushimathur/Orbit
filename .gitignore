@@ -12,3 +12,4 @@ build/
 coverage/
 ios/
 android/
+google-services.json

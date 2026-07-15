@@ -39,6 +39,17 @@ All three give you the same connection string used below: `postgresql://orbit:or
 
 "Forgot password" emails a 6-digit one-time code (self-generated and verified entirely by our own backend — no third-party auth/identity provider involved) via SMTP. The backend needs real `SMTP_HOST`/`SMTP_PORT`/`SMTP_USER`/`SMTP_PASS`/`SMTP_FROM` values in `.env` to even start, since `MailService` validates them eagerly at boot. Any SMTP relay works — a free-tier transactional provider (Brevo, Mailgun, SES, etc.) or your own mail server; for local testing something like [Ethereal](https://ethereal.email) (throwaway inbox, no real delivery) also works.
 
+## Push notifications (Firebase / google-services.json)
+
+The mobile app registers for push notifications on launch (`registerForPushNotifications`), and `apps/mobile/app.json` points `android.googleServicesFile` at `./google-services.json` — Expo's Android build (both local `expo prebuild`/`run:android` and EAS cloud builds) needs this file to exist or the build fails. It's gitignored (it's per-project credentials, not something to commit), so every fresh clone needs to add it back:
+
+1. Create a Firebase project at https://console.firebase.google.com (free).
+2. Add an Android app to it with package name `com.orbit.app` (must match `apps/mobile/app.json`'s `android.package`).
+3. Download the generated `google-services.json` and place it at `apps/mobile/google-services.json`.
+4. For local builds (`expo prebuild` / `run:android`) that's the only step needed. For **EAS cloud builds**, the file is also gitignored from EAS's project archive, so upload it as a credential instead: `cd apps/mobile && eas credentials` → Android → push notifications → let EAS generate/manage the FCM service account, or follow the prompts to upload one from the same Firebase project.
+
+**This is a one-time setup, not a per-run step.** Once `apps/mobile/google-services.json` exists locally, every `mobile:start`/`prebuild`/`run:android` just reads it — no need to revisit Firebase Console. Once `eas credentials` has uploaded the FCM credential to your Expo project, every future `eas build` reuses it automatically too. The only time you'd redo the Firebase Console steps is if the local file is lost (e.g. a fresh clone on a new machine — it's gitignored so it never travels with `git clone`) or the Android package name changes. **Keep a personal backup of `google-services.json`** (password manager, private note, etc.) so a fresh clone is just "paste the file back in" rather than "create a new Firebase app."
+
 ## First-time setup
 
 1. `cp .env.example .env` and fill in the two JWT secrets (random strings, e.g. `openssl rand -hex 32`) and the `SMTP_*` values (see below — these aren't optional, the backend won't start without them).
@@ -50,7 +61,8 @@ All three give you the same connection string used below: `postgresql://orbit:or
    ```
    This generates `apps/backend/prisma/migrations/`, which should be committed to git.
 4. Run the backend: `npm run backend:dev` (from repo root). Listens on `http://localhost:3000`.
-5. Run the mobile app: `npm run mobile:start` — set `EXPO_PUBLIC_API_URL` in `apps/mobile/.env`.
+5. Add `apps/mobile/google-services.json` (see "Push notifications" above) — required before the next step, or `expo prebuild`/`run:android` will fail looking for it.
+6. Run the mobile app: `npm run mobile:start` — set `EXPO_PUBLIC_API_URL` in `apps/mobile/.env`.
    Note: because the app uses `@maplibre/maplibre-react-native` (a native module, not available in the plain Expo Go app), you need a custom dev client — run `npx expo prebuild` then `npx expo run:ios` / `npx expo run:android` once, or build one with `eas build --profile preview`.
 
 ## Running on your Android phone (first real device test)
@@ -62,15 +74,16 @@ credit card needed anywhere in this flow.
 **1. Get the backend reachable on your phone's WiFi**
 
 1. Install Postgres locally and create the database (see above), if you haven't already.
-2. `cp .env.example .env`, fill in the two JWT secrets (e.g. `openssl rand -hex 32`, run twice).
+2. `cp .env.example .env`, fill in the two JWT secrets (e.g. `openssl rand -hex 32`, run twice) and the `SMTP_*` values (see "Email" above).
 3. `npm install` at the repo root.
 4. One-time schema setup: `cd apps/backend && DATABASE_URL=postgresql://orbit:orbit@localhost:5432/orbit npx prisma migrate dev --name init`
-5. Start the backend: from the repo root, `npm run backend:dev`.
-6. Find your computer's LAN IP (not `localhost` — your phone is a separate device):
+5. Add `apps/mobile/google-services.json` (see "Push notifications" above) — the EAS build below will fail without it.
+6. Start the backend: from the repo root, `npm run backend:dev`.
+7. Find your computer's LAN IP (not `localhost` — your phone is a separate device):
    - Mac: `ipconfig getifaddr en0`
    - Windows: `ipconfig` → "IPv4 Address" under your WiFi adapter
    - Linux: `hostname -I`
-7. On your phone's browser (same WiFi network), visit `http://<that-IP>:3000/auth/me`. You should see `{"message":"Unauthorized","statusCode":401}` — that confirms the phone can reach it. If it times out, your computer's firewall is likely blocking inbound connections on port 3000 — allow it.
+8. On your phone's browser (same WiFi network), visit `http://<that-IP>:3000/auth/me`. You should see `{"message":"Unauthorized","statusCode":401}` — that confirms the phone can reach it. If it times out, your computer's firewall is likely blocking inbound connections on port 3000 — allow it.
 
 **2. Point the mobile app at your backend**
 
@@ -89,11 +102,12 @@ That's it — no map token needed. (If you ever want to swap in a different tile
    cd apps/mobile
    eas env:create --scope project --name EXPO_PUBLIC_API_URL --value "http://<your-LAN-IP>:3000" --environment preview --visibility plaintext --non-interactive
    ```
-4. `eas build --platform android --profile preview`
+4. `google-services.json` is also gitignored, so EAS's project archive won't include it either — if you haven't already run `eas credentials` (Android → push notifications) per the "Push notifications" section above, do that now or the build step below will fail.
+5. `eas build --platform android --profile preview`
    - First run may ask a couple of one-time setup questions (e.g. generating a keystore) — accept the defaults.
    - Takes ~10-15 minutes (plus possible queue time on the free tier). When done you get a link and QR code. Track progress at https://expo.dev under your account's project builds.
-5. On your phone, open the link or scan the QR code, download, and install the APK (Android will warn about "install from unknown sources" the first time for a non-Play-Store app — allow it).
-6. Open the app: register, create a circle, grant location permission (choose "Allow all the time" so background sharing works), and you should see yourself appear on the map.
+6. On your phone, open the link or scan the QR code, download, and install the APK (Android will warn about "install from unknown sources" the first time for a non-Play-Store app — allow it).
+7. Open the app: register, create a circle, grant location permission (choose "Allow all the time" so background sharing works), and you should see yourself appear on the map.
 
 Once Android works, the iPhone build (same steps but `--platform ios`, which needs a paid Apple Developer account for a real-device build) reuses the same backend — still no map account needed.
 

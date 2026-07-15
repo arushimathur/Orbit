@@ -1,11 +1,17 @@
 import React, { useState } from "react";
-import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import * as api from "../api/endpoints";
 import { useCircle } from "../circle/CircleContext";
 import { ApiError } from "../api/client";
+import Screen from "../components/Screen";
+import TextField from "../components/TextField";
+import Button from "../components/Button";
+import FormError from "../components/FormError";
+import { useTheme } from "../theme/theme";
 
 export default function CircleSetupScreen() {
   const { setActiveCircle } = useCircle();
+  const { colors, spacing, radius, fontSize, shadow } = useTheme();
   const [circleName, setCircleName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -39,50 +45,52 @@ export default function CircleSetupScreen() {
 
   if (isSubmitting) {
     return (
-      <View style={styles.container}>
-        <ActivityIndicator />
-      </View>
+      <Screen>
+        <ActivityIndicator color={colors.primary} />
+      </Screen>
     );
   }
 
+  const cardStyle = [
+    styles.card,
+    shadow.sm,
+    {
+      backgroundColor: colors.card,
+      borderRadius: radius.lg,
+      padding: spacing(5),
+      marginBottom: spacing(5),
+    },
+  ];
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Start a circle</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Circle name (e.g. Family)"
-        value={circleName}
-        onChangeText={setCircleName}
-      />
-      <Button title="Create circle" onPress={onCreate} disabled={!circleName} />
+    <Screen>
+      <View style={cardStyle}>
+        <Text style={[styles.title, { color: colors.foreground, fontSize: fontSize.xl, marginBottom: spacing(4) }]}>
+          Start a circle
+        </Text>
+        <TextField placeholder="Circle name (e.g. Family)" value={circleName} onChangeText={setCircleName} />
+        <Button title="Create circle" onPress={onCreate} disabled={!circleName} />
+      </View>
 
-      <View style={styles.divider} />
+      <View style={cardStyle}>
+        <Text style={[styles.title, { color: colors.foreground, fontSize: fontSize.xl, marginBottom: spacing(4) }]}>
+          Or join one
+        </Text>
+        <TextField
+          placeholder="8-character invite code"
+          autoCapitalize="characters"
+          value={inviteCode}
+          onChangeText={setInviteCode}
+        />
+        <Button title="Join circle" variant="secondary" onPress={onJoin} disabled={inviteCode.length !== 8} />
+      </View>
 
-      <Text style={styles.title}>Or join one</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="8-character invite code"
-        autoCapitalize="characters"
-        value={inviteCode}
-        onChangeText={setInviteCode}
-      />
-      <Button title="Join circle" onPress={onJoin} disabled={inviteCode.length !== 8} />
-
-      {error && <Text style={styles.error}>{error}</Text>}
-    </View>
+      {error && <FormError message={error} />}
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24 },
-  title: { fontSize: 20, fontWeight: "700", marginBottom: 16, textAlign: "center" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  divider: { height: 32 },
-  error: { color: "crimson", marginTop: 16 },
+  card: { width: "100%" },
+  title: { fontWeight: "700", textAlign: "center" },
 });

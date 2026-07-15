@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#eef0f3"
     },
     "ios": {
       "supportsTablet": true,
@@ -21,6 +21,7 @@
     },
     "android": {
       "package": "com.orbit.app",
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION",
@@ -38,6 +39,7 @@
         }
       ],
       "@maplibre/maplibre-react-native",
+      "expo-notifications",
       [
         "expo-build-properties",
         {

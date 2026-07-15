@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import { LocationUpdateEvent, MemberLocation } from "@orbit/shared";
 import { useCircle } from "../circle/CircleContext";
@@ -7,6 +8,7 @@ import * as api from "../api/endpoints";
 import { subscribeToCircleEvents } from "../api/sse";
 import { startBackgroundLocationTracking } from "../location/backgroundLocationTask";
 import { MAP_STYLE_URL } from "../config";
+import { useTheme } from "../theme/theme";
 
 function lastSeenLabel(recordedAt: string): string {
   const minutesAgo = Math.max(0, Math.round((Date.now() - new Date(recordedAt).getTime()) / 60000));
@@ -17,6 +19,8 @@ function lastSeenLabel(recordedAt: string): string {
 
 export default function MapScreen() {
   const { circle } = useCircle();
+  const { colors, spacing, radius, fontSize, shadow } = useTheme();
+  const insets = useSafeAreaInsets();
   const [memberLocations, setMemberLocations] = useState<Record<string, MemberLocation>>({});
 
   useEffect(() => {
@@ -59,10 +63,18 @@ export default function MapScreen() {
   if (!circle) return null;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.circleName}>{circle.name}</Text>
-        <Text style={styles.inviteCode}>Invite code: {circle.inviteCode}</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          shadow.sm,
+          { backgroundColor: colors.card, borderBottomColor: colors.border, paddingTop: insets.top + spacing(3) },
+        ]}
+      >
+        <Text style={[styles.circleName, { color: colors.foreground, fontSize: fontSize.lg }]}>{circle.name}</Text>
+        <Text style={[styles.inviteCode, { color: colors.mutedForeground, fontSize: fontSize.sm }]}>
+          Invite code: {circle.inviteCode}
+        </Text>
       </View>
       <MapLibreGL.MapView style={styles.map} mapStyle={MAP_STYLE_URL}>
         <MapLibreGL.Camera
@@ -73,21 +85,31 @@ export default function MapScreen() {
         />
         {withPing.map(({ user, ping }) => (
           <MapLibreGL.PointAnnotation key={user.id} id={user.id} coordinate={[ping!.lng, ping!.lat]}>
-            <View style={styles.pin}>
-              <Text style={styles.pinText}>{user.name.slice(0, 1).toUpperCase()}</Text>
+            <View
+              style={[
+                styles.pin,
+                shadow.sm,
+                { backgroundColor: colors.primary, borderRadius: radius.full, borderColor: colors.card },
+              ]}
+            >
+              <Text style={[styles.pinText, { color: colors.primaryForeground }]}>
+                {user.name.slice(0, 1).toUpperCase()}
+              </Text>
             </View>
           </MapLibreGL.PointAnnotation>
         ))}
       </MapLibreGL.MapView>
 
       <FlatList
-        style={styles.list}
+        style={[styles.list, { backgroundColor: colors.card, borderTopColor: colors.border }]}
         data={members}
         keyExtractor={(m) => m.user.id}
         renderItem={({ item }) => (
-          <View style={styles.row}>
-            <Text style={styles.name}>{item.user.name}</Text>
-            <Text style={styles.meta}>
+          <View style={[styles.row, { paddingHorizontal: spacing(4), paddingVertical: spacing(3) }]}>
+            <Text style={[styles.name, { color: colors.foreground, fontSize: fontSize.base }]}>
+              {item.user.name}
+            </Text>
+            <Text style={[styles.meta, { color: colors.mutedForeground, fontSize: fontSize.sm }]}>
               {item.ping
                 ? `${lastSeenLabel(item.ping.recordedAt)}${
                     item.ping.batteryPct !== null ? ` · ${Math.round(item.ping.batteryPct)}% battery` : ""
@@ -103,23 +125,20 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { padding: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#ccc" },
-  circleName: { fontSize: 18, fontWeight: "700" },
-  inviteCode: { color: "#666", fontSize: 13, marginTop: 2 },
+  header: { paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth },
+  circleName: { fontWeight: "700" },
+  inviteCode: { marginTop: 2 },
   map: { flex: 3 },
   pin: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: "#2563eb",
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "white",
   },
-  pinText: { color: "white", fontWeight: "700" },
-  list: { flex: 1, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#ccc" },
-  row: { flexDirection: "row", justifyContent: "space-between", padding: 12 },
+  pinText: { fontWeight: "700" },
+  list: { flex: 1, borderTopWidth: StyleSheet.hairlineWidth },
+  row: { flexDirection: "row", justifyContent: "space-between" },
   name: { fontWeight: "600" },
-  meta: { color: "#666" },
+  meta: {},
 });

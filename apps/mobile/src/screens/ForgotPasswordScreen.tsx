@@ -1,13 +1,19 @@
 import React, { useState } from "react";
-import { ActivityIndicator, Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { forgotPassword } from "../api/endpoints";
 import { ApiError } from "../api/client";
 import type { AuthStackParamList } from "../navigation/RootNavigator";
+import Screen from "../components/Screen";
+import TextField from "../components/TextField";
+import Button from "../components/Button";
+import FormError from "../components/FormError";
+import { useTheme } from "../theme/theme";
 
 type Props = NativeStackScreenProps<AuthStackParamList, "ForgotPassword">;
 
 export default function ForgotPasswordScreen({ navigation }: Props) {
+  const { colors, spacing, fontSize } = useTheme();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,40 +32,31 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Reset your password</Text>
-      <Text style={styles.subtitle}>We&apos;ll email you a 6-digit code to reset your password.</Text>
-      <TextInput
-        style={styles.input}
+    <Screen>
+      <Text style={[styles.title, { color: colors.foreground, fontSize: fontSize["3xl"], marginBottom: spacing(2) }]}>
+        Reset your password
+      </Text>
+      <Text
+        style={[styles.subtitle, { color: colors.mutedForeground, fontSize: fontSize.sm, marginBottom: spacing(8) }]}
+      >
+        We&apos;ll email you a 6-digit code to reset your password.
+      </Text>
+      <TextField
         placeholder="Email"
         autoCapitalize="none"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
       />
-      {error && <Text style={styles.error}>{error}</Text>}
-      {isSubmitting ? (
-        <ActivityIndicator />
-      ) : (
-        <Button title="Send code" onPress={onSubmit} disabled={!email} />
-      )}
-      <View style={styles.spacer} />
-      <Button title="Back to login" onPress={() => navigation.navigate("Login")} />
-    </View>
+      {error && <FormError message={error} />}
+      <Button title="Send code" onPress={onSubmit} disabled={!email} loading={isSubmitting} />
+      <View style={{ height: spacing(4) }} />
+      <Button title="Back to login" variant="outline" onPress={() => navigation.navigate("Login")} />
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", padding: 24 },
-  title: { fontSize: 24, fontWeight: "700", marginBottom: 12, textAlign: "center" },
-  subtitle: { fontSize: 14, color: "#666", marginBottom: 24, textAlign: "center" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-  },
-  error: { color: "crimson", marginBottom: 12 },
-  spacer: { height: 16 },
+  title: { fontWeight: "700", textAlign: "center" },
+  subtitle: { textAlign: "center" },
 });
