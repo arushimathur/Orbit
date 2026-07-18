@@ -44,6 +44,10 @@ export function me(): Promise<PublicUser> {
   return apiFetch<PublicUser>("/auth/me");
 }
 
+export function getMyCircles(): Promise<Circle[]> {
+  return apiFetch<Circle[]>("/circles/mine");
+}
+
 export function createCircle(dto: CreateCircleDto): Promise<Circle> {
   return apiFetch<Circle>("/circles", { method: "POST", body: dto });
 }
@@ -54,6 +58,10 @@ export function joinCircle(dto: JoinCircleDto): Promise<Circle> {
 
 export function listMembers(circleId: string): Promise<CircleMember[]> {
   return apiFetch<CircleMember[]>(`/circles/${circleId}/members`);
+}
+
+export function leaveCircle(circleId: string): Promise<void> {
+  return apiFetch<void>(`/circles/${circleId}/members/me`, { method: "DELETE" });
 }
 
 export function postLocation(dto: CreateLocationPingDto): Promise<LocationPing> {

@@ -1,8 +1,11 @@
 import React, { useState } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import * as api from "../api/endpoints";
 import { useCircle } from "../circle/CircleContext";
 import { ApiError } from "../api/client";
+import { MainStackParamList } from "../navigation/RootNavigator";
 import Screen from "../components/Screen";
 import TextField from "../components/TextField";
 import Button from "../components/Button";
@@ -11,6 +14,7 @@ import { useTheme } from "../theme/theme";
 
 export default function CircleSetupScreen() {
   const { setActiveCircle } = useCircle();
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const { colors, spacing, radius, fontSize, shadow } = useTheme();
   const [circleName, setCircleName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
@@ -23,6 +27,7 @@ export default function CircleSetupScreen() {
     try {
       const circle = await api.createCircle({ name: circleName });
       await setActiveCircle(circle);
+      if (navigation.canGoBack()) navigation.popToTop();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Something went wrong");
     } finally {
@@ -36,6 +41,7 @@ export default function CircleSetupScreen() {
     try {
       const circle = await api.joinCircle({ inviteCode: inviteCode.toUpperCase() });
       await setActiveCircle(circle);
+      if (navigation.canGoBack()) navigation.popToTop();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Something went wrong");
     } finally {

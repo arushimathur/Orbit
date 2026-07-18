@@ -9,7 +9,11 @@ import RegisterScreen from "../screens/RegisterScreen";
 import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
 import ResetPasswordScreen from "../screens/ResetPasswordScreen";
 import CircleSetupScreen from "../screens/CircleSetupScreen";
+import CirclesScreen from "../screens/CirclesScreen";
 import MapScreen from "../screens/MapScreen";
+import NotificationsScreen from "../screens/NotificationsScreen";
+import ProfileScreen from "../screens/ProfileScreen";
+import SettingsScreen from "../screens/SettingsScreen";
 import { useTheme } from "../theme/theme";
 
 export type AuthStackParamList = {
@@ -22,6 +26,10 @@ export type AuthStackParamList = {
 export type MainStackParamList = {
   CircleSetup: undefined;
   Map: undefined;
+  Circles: undefined;
+  Notifications: undefined;
+  Profile: undefined;
+  Settings: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -71,7 +79,34 @@ export default function RootNavigator() {
           {!circle ? (
             <MainStack.Screen name="CircleSetup" component={CircleSetupScreen} />
           ) : (
-            <MainStack.Screen name="Map" component={MapScreen} />
+            <>
+              <MainStack.Screen name="Map" component={MapScreen} />
+              <MainStack.Screen
+                name="Circles"
+                component={CirclesScreen}
+                options={{ headerShown: true, title: "My Circles" }}
+              />
+              <MainStack.Screen
+                name="CircleSetup"
+                component={CircleSetupScreen}
+                options={{ headerShown: true, title: "Add a circle" }}
+              />
+              <MainStack.Screen
+                name="Notifications"
+                component={NotificationsScreen}
+                options={{ headerShown: true, title: "Notifications" }}
+              />
+              <MainStack.Screen
+                name="Profile"
+                component={ProfileScreen}
+                options={{ headerShown: true, title: "Profile" }}
+              />
+              <MainStack.Screen
+                name="Settings"
+                component={SettingsScreen}
+                options={{ headerShown: true, title: "Settings" }}
+              />
+            </>
           )}
         </MainStack.Navigator>
       )}

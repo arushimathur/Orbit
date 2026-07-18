@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Ionicons } from "@expo/vector-icons";
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import { LocationUpdateEvent, MemberLocation } from "@orbit/shared";
 import { useCircle } from "../circle/CircleContext";
@@ -8,6 +11,7 @@ import * as api from "../api/endpoints";
 import { subscribeToCircleEvents } from "../api/sse";
 import { startBackgroundLocationTracking } from "../location/backgroundLocationTask";
 import { MAP_STYLE_URL } from "../config";
+import { MainStackParamList } from "../navigation/RootNavigator";
 import { useTheme } from "../theme/theme";
 
 function lastSeenLabel(recordedAt: string): string {
@@ -21,6 +25,7 @@ export default function MapScreen() {
   const { circle } = useCircle();
   const { colors, spacing, radius, fontSize, shadow } = useTheme();
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
   const [memberLocations, setMemberLocations] = useState<Record<string, MemberLocation>>({});
 
   useEffect(() => {
@@ -71,10 +76,54 @@ export default function MapScreen() {
           { backgroundColor: colors.card, borderBottomColor: colors.border, paddingTop: insets.top + spacing(3) },
         ]}
       >
-        <Text style={[styles.circleName, { color: colors.foreground, fontSize: fontSize.lg }]}>{circle.name}</Text>
-        <Text style={[styles.inviteCode, { color: colors.mutedForeground, fontSize: fontSize.sm }]}>
-          Invite code: {circle.inviteCode}
-        </Text>
+        <View style={styles.headerRow}>
+          <Pressable
+            style={[styles.headerText, styles.headerRowInner]}
+            onPress={() => navigation.navigate("Circles")}
+            hitSlop={8}
+          >
+            <View style={{ flexShrink: 1 }}>
+              <Text style={[styles.circleName, { color: colors.foreground, fontSize: fontSize.lg }]}>
+                {circle.name}
+              </Text>
+              <Text style={[styles.inviteCode, { color: colors.mutedForeground, fontSize: fontSize.sm }]}>
+                Invite code: {circle.inviteCode}
+              </Text>
+            </View>
+            <Ionicons
+              name="chevron-down"
+              size={fontSize.base}
+              color={colors.mutedForeground}
+              style={{ marginLeft: spacing(1) }}
+            />
+          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityLabel="Notifications"
+              onPress={() => navigation.navigate("Notifications")}
+              style={{ marginLeft: spacing(4) }}
+              hitSlop={8}
+            >
+              <Ionicons name="notifications-outline" size={fontSize.xl} color={colors.foreground} />
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Profile"
+              onPress={() => navigation.navigate("Profile")}
+              style={{ marginLeft: spacing(4) }}
+              hitSlop={8}
+            >
+              <Ionicons name="person-circle-outline" size={fontSize.xl} color={colors.foreground} />
+            </Pressable>
+            <Pressable
+              accessibilityLabel="Settings"
+              onPress={() => navigation.navigate("Settings")}
+              style={{ marginLeft: spacing(4) }}
+              hitSlop={8}
+            >
+              <Ionicons name="settings-outline" size={fontSize.xl} color={colors.foreground} />
+            </Pressable>
+          </View>
+        </View>
       </View>
       <MapLibreGL.MapView style={styles.map} mapStyle={MAP_STYLE_URL}>
         <MapLibreGL.Camera
@@ -126,6 +175,10 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth },
+  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  headerText: { flexShrink: 1 },
+  headerRowInner: { flexDirection: "row", alignItems: "center" },
+  headerActions: { flexDirection: "row", alignItems: "center" },
   circleName: { fontWeight: "700" },
   inviteCode: { marginTop: 2 },
   map: { flex: 3 },

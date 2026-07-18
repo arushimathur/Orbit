@@ -75,6 +75,22 @@ export class CirclesService {
     return memberships.map((m) => m.circleId);
   }
 
+  async leave(circleId: string, userId: string): Promise<void> {
+    await this.assertMembership(circleId, userId);
+    await this.prisma.circleMember.delete({
+      where: { circleId_userId: { circleId, userId } },
+    });
+  }
+
+  async listForUser(userId: string): Promise<Circle[]> {
+    const memberships = await this.prisma.circleMember.findMany({
+      where: { userId },
+      include: { circle: true },
+      orderBy: { joinedAt: "asc" },
+    });
+    return memberships.map((m) => this.toCircle(m.circle));
+  }
+
   private async generateUniqueInviteCode(): Promise<string> {
     for (let attempt = 0; attempt < 10; attempt++) {
       const code = this.randomInviteCode();
