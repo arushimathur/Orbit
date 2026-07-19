@@ -120,6 +120,10 @@ export class AuthService {
     ]);
   }
 
+  async updatePushToken(userId: string, pushToken: string): Promise<void> {
+    await this.prisma.user.update({ where: { id: userId }, data: { pushToken } });
+  }
+
   private async issueTokens(userId: string): Promise<AuthTokens> {
     const jti = randomUUID();
     const accessToken = await this.accessJwt.signAsync({ sub: userId });

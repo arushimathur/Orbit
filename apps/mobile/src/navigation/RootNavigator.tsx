@@ -14,7 +14,10 @@ import MapScreen from "../screens/MapScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import SavedLocationsScreen from "../screens/SavedLocationsScreen";
+import AddPlaceScreen from "../screens/AddPlaceScreen";
 import { useTheme } from "../theme/theme";
+import { navigationRef } from "./navigationRef";
 
 export type AuthStackParamList = {
   Login: undefined;
@@ -30,6 +33,8 @@ export type MainStackParamList = {
   Notifications: undefined;
   Profile: undefined;
   Settings: undefined;
+  SavedLocations: undefined;
+  AddPlace: undefined;
 };
 
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -66,7 +71,7 @@ export default function RootNavigator() {
   }
 
   return (
-    <NavigationContainer theme={navigationTheme}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
       {!user ? (
         <AuthStack.Navigator screenOptions={{ headerShown: false }}>
           <AuthStack.Screen name="Login" component={LoginScreen} />
@@ -105,6 +110,16 @@ export default function RootNavigator() {
                 name="Settings"
                 component={SettingsScreen}
                 options={{ headerShown: true, title: "Settings" }}
+              />
+              <MainStack.Screen
+                name="SavedLocations"
+                component={SavedLocationsScreen}
+                options={{ headerShown: true, title: "My Places" }}
+              />
+              <MainStack.Screen
+                name="AddPlace"
+                component={AddPlaceScreen}
+                options={{ headerShown: true, title: "Add a place" }}
               />
             </>
           )}

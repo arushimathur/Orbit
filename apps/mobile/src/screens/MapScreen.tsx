@@ -13,13 +13,7 @@ import { startBackgroundLocationTracking } from "../location/backgroundLocationT
 import { MAP_STYLE_URL } from "../config";
 import { MainStackParamList } from "../navigation/RootNavigator";
 import { useTheme } from "../theme/theme";
-
-function lastSeenLabel(recordedAt: string): string {
-  const minutesAgo = Math.max(0, Math.round((Date.now() - new Date(recordedAt).getTime()) / 60000));
-  if (minutesAgo < 1) return "just now";
-  if (minutesAgo < 60) return `${minutesAgo}m ago`;
-  return `${Math.round(minutesAgo / 60)}h ago`;
-}
+import { lastSeenLabel } from "../utils/time";
 
 export default function MapScreen() {
   const { circle } = useCircle();
@@ -98,6 +92,14 @@ export default function MapScreen() {
             />
           </Pressable>
           <View style={styles.headerActions}>
+            <Pressable
+              accessibilityLabel="Saved Places"
+              onPress={() => navigation.navigate("SavedLocations")}
+              style={{ marginLeft: spacing(4) }}
+              hitSlop={8}
+            >
+              <Ionicons name="location-outline" size={fontSize.xl} color={colors.foreground} />
+            </Pressable>
             <Pressable
               accessibilityLabel="Notifications"
               onPress={() => navigation.navigate("Notifications")}

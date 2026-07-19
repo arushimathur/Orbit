@@ -4,14 +4,17 @@ import {
   CircleMember,
   CreateCircleDto,
   CreateLocationPingDto,
+  CreatePlaceDto,
   ForgotPasswordDto,
   JoinCircleDto,
   LoginDto,
   LocationPing,
   MemberLocation,
+  Notification,
   PublicUser,
   RegisterDto,
   ResetPasswordDto,
+  SavedLocation,
 } from "@orbit/shared";
 import { apiFetch } from "./client";
 import { tokenStore } from "./tokenStore";
@@ -70,4 +73,28 @@ export function postLocation(dto: CreateLocationPingDto): Promise<LocationPing> 
 
 export function getLatestLocations(circleId: string): Promise<MemberLocation[]> {
   return apiFetch<MemberLocation[]>(`/circles/${circleId}/locations/latest`);
+}
+
+export function updatePushToken(pushToken: string): Promise<void> {
+  return apiFetch<void>("/auth/push-token", { method: "PATCH", body: { pushToken } });
+}
+
+export function listPlaces(): Promise<SavedLocation[]> {
+  return apiFetch<SavedLocation[]>("/places");
+}
+
+export function createPlace(dto: CreatePlaceDto): Promise<SavedLocation> {
+  return apiFetch<SavedLocation>("/places", { method: "POST", body: dto });
+}
+
+export function deletePlace(id: string): Promise<void> {
+  return apiFetch<void>(`/places/${id}`, { method: "DELETE" });
+}
+
+export function listNotifications(): Promise<Notification[]> {
+  return apiFetch<Notification[]>("/notifications");
+}
+
+export function markAllNotificationsRead(): Promise<void> {
+  return apiFetch<void>("/notifications/read-all", { method: "PATCH" });
 }

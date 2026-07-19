@@ -10,6 +10,9 @@
     ],
     "android": {
       "package": "com.arushimathur_17.orbit"
+    },
+    "splash": {
+      "backgroundColor": "#ffffff"
     }
   }
 }

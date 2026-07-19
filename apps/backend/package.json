@@ -21,6 +21,7 @@
     "@orbit/shared": "*",
     "@prisma/client": "^5.19.1",
     "argon2": "^0.41.1",
+    "expo-server-sdk": "^6.1.0",
     "nodemailer": "^9.0.3",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

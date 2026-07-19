@@ -1,16 +1,20 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { CreateLocationPingDto, LocationPing, MemberLocation } from "@orbit/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { toPublicUser } from "../common/public-user.mapper";
 import { CirclesService } from "../circles/circles.service";
 import { RealtimeService } from "../realtime/realtime.service";
+import { PlacesService } from "../places/places.service";
 
 @Injectable()
 export class LocationsService {
+  private readonly logger = new Logger(LocationsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly circlesService: CirclesService,
     private readonly realtimeService: RealtimeService,
+    private readonly placesService: PlacesService,
   ) {}
 
   async create(userId: string, dto: CreateLocationPingDto): Promise<LocationPing> {
@@ -39,6 +43,17 @@ export class LocationsService {
         user: toPublicUser(user),
         ping: publicPing,
       });
+    }
+
+    // Place arrival/departure evaluation is a downstream, best-effort feature -- a failure
+    // here (DB hiccup, a place deleted mid-evaluation, etc.) must never turn an already-
+    // persisted, already-broadcast ping into a failed request.
+    try {
+      await this.placesService.evaluateForPing(userId, publicPing, user.name);
+    } catch (err) {
+      this.logger.warn(
+        `Failed to evaluate saved places for ping: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
 
     return publicPing;

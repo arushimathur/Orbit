@@ -3,9 +3,10 @@ import { CircleLocationsController, LocationsController } from "./locations.cont
 import { LocationsService } from "./locations.service";
 import { CirclesModule } from "../circles/circles.module";
 import { RealtimeModule } from "../realtime/realtime.module";
+import { PlacesModule } from "../places/places.module";
 
 @Module({
-  imports: [CirclesModule, RealtimeModule],
+  imports: [CirclesModule, RealtimeModule, PlacesModule],
   controllers: [LocationsController, CircleLocationsController],
   providers: [LocationsService],
 })

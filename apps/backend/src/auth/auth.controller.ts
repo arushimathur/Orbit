@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post, UseGuards } from "@nestjs/common";
 import {
   ForgotPasswordDto,
   forgotPasswordDtoSchema,
@@ -10,6 +10,8 @@ import {
   registerDtoSchema,
   ResetPasswordDto,
   resetPasswordDtoSchema,
+  UpdatePushTokenDto,
+  updatePushTokenDtoSchema,
 } from "@orbit/shared";
 import { AuthService } from "./auth.service";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
@@ -59,5 +61,15 @@ export class AuthController {
   async me(@CurrentUser() user: AuthenticatedUser) {
     const record = await this.prisma.user.findUniqueOrThrow({ where: { id: user.id } });
     return toPublicUser(record);
+  }
+
+  @Patch("push-token")
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  updatePushToken(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(updatePushTokenDtoSchema)) dto: UpdatePushTokenDto,
+  ) {
+    return this.authService.updatePushToken(user.id, dto.pushToken);
   }
 }

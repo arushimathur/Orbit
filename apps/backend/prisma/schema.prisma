@@ -21,12 +21,16 @@ model User {
   email          String          @unique
   passwordHash   String
   avatarUrl      String?
+  pushToken      String?
   createdAt      DateTime        @default(now())
   refreshTokens  RefreshToken[]
   circleMembers  CircleMember[]
   locationPings  LocationPing[]
   ownedCircles   Circle[]        @relation("CircleOwner")
   passwordResetTokens PasswordResetToken[]
+  savedLocations SavedLocation[]
+  placeEventsReceived PlaceEvent[] @relation("PlaceEventRecipient")
+  placeEventsTriggered PlaceEvent[] @relation("PlaceEventActor")
 }
 
 model RefreshToken {
@@ -92,4 +96,54 @@ model LocationPing {
   createdAt  DateTime @default(now())
 
   @@index([userId, recordedAt(sort: Desc)])
+}
+
+// A user's saved place (e.g. "Home", "Work"). `isInside` tracks the last-observed
+// geofence state so LocationsService can detect arrival/departure transitions on
+// each new ping without needing PostGIS -- plain Haversine distance is enough at
+// this scale. `isInside` is nullable (not defaulted to false) so the very first
+// ping evaluated after a place is created only records a baseline instead of
+// firing a spurious arrival/departure notification.
+model SavedLocation {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  lat       Float
+  lng       Float
+  radiusM   Float
+  isInside  Boolean?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  placeEvents PlaceEvent[]
+
+  @@index([userId])
+}
+
+enum PlaceEventType {
+  arrived
+  left
+}
+
+// Per-recipient notification row, fanned out to every circle member who shares
+// a circle with the actor at the moment of the transition. actorName/placeName
+// are denormalized at write time so notification history still renders correctly
+// even after the actor's name changes, the actor's account is deleted, or the
+// place itself is deleted.
+model PlaceEvent {
+  id              String         @id @default(uuid())
+  recipientUserId String
+  recipient       User           @relation("PlaceEventRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+  actorUserId     String?
+  actor           User?          @relation("PlaceEventActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  actorName       String
+  placeId         String?
+  place           SavedLocation? @relation(fields: [placeId], references: [id], onDelete: SetNull)
+  placeName       String
+  type            PlaceEventType
+  occurredAt      DateTime
+  createdAt       DateTime       @default(now())
+  readAt          DateTime?
+
+  @@index([recipientUserId, createdAt(sort: Desc)])
 }

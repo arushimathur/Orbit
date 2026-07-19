@@ -5,6 +5,8 @@ import { AuthModule } from "./auth/auth.module";
 import { CirclesModule } from "./circles/circles.module";
 import { LocationsModule } from "./locations/locations.module";
 import { RealtimeModule } from "./realtime/realtime.module";
+import { PlacesModule } from "./places/places.module";
+import { PushModule } from "./push/push.module";
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { RealtimeModule } from "./realtime/realtime.module";
     CirclesModule,
     LocationsModule,
     RealtimeModule,
+    PlacesModule,
+    PushModule,
   ],
 })
 export class AppModule {}

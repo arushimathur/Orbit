@@ -75,6 +75,21 @@ export class CirclesService {
     return memberships.map((m) => m.circleId);
   }
 
+  // Every user, deduplicated, who shares at least one circle with `userId` -- excludes
+  // `userId` itself. Used to fan out place arrival/departure notifications without
+  // double-notifying someone who shares more than one circle with the actor.
+  async listFellowMemberIds(userId: string): Promise<string[]> {
+    const circleIds = await this.listCircleIdsForUser(userId);
+    if (circleIds.length === 0) return [];
+
+    const fellowMembers = await this.prisma.circleMember.findMany({
+      where: { circleId: { in: circleIds }, userId: { not: userId } },
+      select: { userId: true },
+      distinct: ["userId"],
+    });
+    return fellowMembers.map((m) => m.userId);
+  }
+
   async leave(circleId: string, userId: string): Promise<void> {
     await this.assertMembership(circleId, userId);
     await this.prisma.circleMember.delete({
