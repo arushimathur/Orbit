@@ -10,6 +10,23 @@ import { registerForPushNotifications } from "./src/notifications/registerForPus
 import * as api from "./src/api/endpoints";
 import { useTheme } from "./src/theme/theme";
 
+// Tile requests are routinely canceled during normal map pan/zoom/unmount, and stray vector-tile
+// geometry warnings are non-actionable -- left unfiltered they spam RN's dev warning banner, which
+// docks at the bottom of the screen and ends up covering on-screen buttons there (e.g. "Add a
+// place" on the saved-locations screen). maplibre-react-native's own Logger.setLogCallback hook
+// exists for exactly this, but doesn't reliably suppress these specific messages in practice, so
+// this intercepts the console.warn call it makes directly instead.
+const originalConsoleWarn = console.warn;
+console.warn = (...args: unknown[]) => {
+  if (args[0] === "MapLibre warning" && typeof args[1] === "string") {
+    const message = args[1];
+    if (message.includes("Request failed due to a permanent error") || message.includes("Invalid geometry")) {
+      return;
+    }
+  }
+  originalConsoleWarn(...args);
+};
+
 function PushNotificationSync() {
   const { user } = useAuth();
   const [pushToken, setPushToken] = useState<string | null>(null);

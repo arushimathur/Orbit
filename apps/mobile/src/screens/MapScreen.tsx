@@ -93,14 +93,6 @@ export default function MapScreen() {
           </Pressable>
           <View style={styles.headerActions}>
             <Pressable
-              accessibilityLabel="Saved Places"
-              onPress={() => navigation.navigate("SavedLocations")}
-              style={{ marginLeft: spacing(4) }}
-              hitSlop={8}
-            >
-              <Ionicons name="location-outline" size={fontSize.xl} color={colors.foreground} />
-            </Pressable>
-            <Pressable
               accessibilityLabel="Notifications"
               onPress={() => navigation.navigate("Notifications")}
               style={{ marginLeft: spacing(4) }}

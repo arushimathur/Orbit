@@ -85,6 +85,15 @@ export default function SettingsScreen() {
         <Button title="My circles" variant="outline" onPress={() => navigation.navigate("Circles")} disabled={isBusy} />
       </View>
 
+      <View style={cardStyle}>
+        <Button
+          title="My places"
+          variant="outline"
+          onPress={() => navigation.navigate("SavedLocations")}
+          disabled={isBusy}
+        />
+      </View>
+
       {circle && (
         <View style={cardStyle}>
           <Button title="Leave circle" variant="outline" onPress={onLeaveCircle} disabled={isBusy} />

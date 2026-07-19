@@ -10,9 +10,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@orbit/shared": "*",
     "@expo/vector-icons": "^14.0.3",
     "@maplibre/maplibre-react-native": "10.4.2",
+    "@orbit/shared": "*",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.11.0",
     "expo": "~51.0.28",

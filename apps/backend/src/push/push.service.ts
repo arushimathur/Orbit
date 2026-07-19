@@ -1,6 +1,15 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import Expo, { ExpoPushMessage } from "expo-server-sdk";
+import type Expo from "expo-server-sdk";
+import type { ExpoPushMessage } from "expo-server-sdk";
+
+// expo-server-sdk ships ESM-only; this backend compiles to CommonJS, and TypeScript
+// rewrites a plain `import()` back into `require()` under that target, which still
+// throws ERR_REQUIRE_ESM. Routing through `Function` forces Node's native dynamic
+// import instead.
+const importEsm = new Function("specifier", "return import(specifier)") as (
+  specifier: string,
+) => Promise<{ default: typeof Expo }>;
 
 interface PushRecipient {
   id: string;
@@ -16,21 +25,32 @@ interface PushMessage {
 @Injectable()
 export class PushService {
   private readonly logger = new Logger(PushService.name);
-  private readonly expo: Expo;
+  private readonly accessToken?: string;
+  private clientPromise: Promise<{ ExpoCtor: typeof Expo; expo: Expo }> | null = null;
 
   constructor(config: ConfigService) {
-    const accessToken = config.get<string>("EXPO_ACCESS_TOKEN");
-    this.expo = new Expo(accessToken ? { accessToken } : undefined);
+    this.accessToken = config.get<string>("EXPO_ACCESS_TOKEN");
+  }
+
+  private getClient(): Promise<{ ExpoCtor: typeof Expo; expo: Expo }> {
+    if (!this.clientPromise) {
+      this.clientPromise = importEsm("expo-server-sdk").then(({ default: ExpoCtor }) => ({
+        ExpoCtor,
+        expo: new ExpoCtor(this.accessToken ? { accessToken: this.accessToken } : undefined),
+      }));
+    }
+    return this.clientPromise;
   }
 
   // Sends a push to each recipient with a valid token. Returns the ids of recipients whose
   // token Expo confirmed is dead (DeviceNotRegistered), so the caller can clear it. Never
   // throws -- a push-provider failure must never fail the request that triggered it.
   async sendToUsers(recipients: PushRecipient[], message: PushMessage): Promise<string[]> {
+    const { ExpoCtor, expo } = await this.getClient();
     const tokenByUserId = new Map<string, string>();
     for (const recipient of recipients) {
       if (!recipient.pushToken) continue;
-      if (!Expo.isExpoPushToken(recipient.pushToken)) {
+      if (!ExpoCtor.isExpoPushToken(recipient.pushToken)) {
         this.logger.warn(`Skipping invalid Expo push token for user ${recipient.id}`);
         continue;
       }
@@ -48,13 +68,13 @@ export class PushService {
     }));
 
     const deadTokenUserIds: string[] = [];
-    const chunks = this.expo.chunkPushNotifications(messages);
+    const chunks = expo.chunkPushNotifications(messages);
     let cursor = 0;
     for (const chunk of chunks) {
       const chunkUserIds = userIds.slice(cursor, cursor + chunk.length);
       cursor += chunk.length;
       try {
-        const tickets = await this.expo.sendPushNotificationsAsync(chunk);
+        const tickets = await expo.sendPushNotificationsAsync(chunk);
         tickets.forEach((ticket, i) => {
           if (ticket.status === "error" && ticket.details?.error === "DeviceNotRegistered") {
             deadTokenUserIds.push(chunkUserIds[i]);

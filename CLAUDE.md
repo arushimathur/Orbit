@@ -79,7 +79,7 @@ Plain Postgres, no PostGIS yet (deliberately deferred to Phase 2 when geofencing
 
 ### Maps
 
-MapLibre (`@maplibre/maplibre-react-native`) + OpenFreeMap vector tiles — chosen specifically to avoid any Mapbox/Google account, API key, or credit card requirement. This is a native module, so the mobile app cannot run in plain Expo Go; it needs a custom dev client (`expo prebuild` + `expo run:android`/`run:ios`, or an EAS build).
+MapLibre (`@maplibre/maplibre-react-native`) + OpenFreeMap vector tiles — chosen specifically to avoid any Mapbox/Google account, API key, or credit card requirement. This is a native module, so the mobile app cannot run in plain Expo Go; it needs a custom dev client (`expo prebuild` + `expo run:android`/`run:ios`, or an EAS build). Place search uses Nominatim (`apps/mobile/src/api/geocoding.ts`), also account-free.
 
 ## Known simplifications (intentional, documented in README)
 

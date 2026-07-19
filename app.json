@@ -8,6 +8,9 @@
       "ios",
       "android"
     ],
+    "ios": {
+      "bundleIdentifier": "com.arushimathur17.orbit"
+    },
     "android": {
       "package": "com.arushimathur_17.orbit"
     },

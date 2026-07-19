@@ -2,7 +2,7 @@
 
 A self-hosted, privacy-respecting Life360-style location sharing app for a small circle. See `apps/` for the backend and mobile app, and `packages/shared` for the types shared between them. The full architecture and phased roadmap live in the plan this repo was built from (Phase 1 = auth, circles, live map).
 
-Maps use [MapLibre](https://maplibre.org/) + [OpenFreeMap](https://openfreemap.org) — free public vector tiles, no account, no API key, no credit card, anywhere in this project.
+Maps use [MapLibre](https://maplibre.org/) + [OpenFreeMap](https://openfreemap.org) — free public vector tiles, no account, no API key, no credit card, anywhere in this project. Place search uses [Nominatim](https://nominatim.org/) (OpenStreetMap), also account-free.
 
 No Docker required — everything runs directly with Node/npm and a locally-installed Postgres.
 

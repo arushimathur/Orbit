@@ -1,4 +1,4 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import { StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
 import { useTheme } from "../theme/theme";
 
@@ -6,7 +6,7 @@ type Props = TextInputProps & {
   label?: string;
 };
 
-export default function TextField({ label, style, ...inputProps }: Props) {
+const TextField = forwardRef<TextInput, Props>(({ label, style, ...inputProps }, ref) => {
   const { colors, radius, spacing, fontSize } = useTheme();
 
   return (
@@ -17,6 +17,7 @@ export default function TextField({ label, style, ...inputProps }: Props) {
         </Text>
       )}
       <TextInput
+        ref={ref}
         placeholderTextColor={colors.mutedForeground}
         style={[
           styles.input,
@@ -35,7 +36,11 @@ export default function TextField({ label, style, ...inputProps }: Props) {
       />
     </View>
   );
-}
+});
+
+TextField.displayName = "TextField";
+
+export default TextField;
 
 const styles = StyleSheet.create({
   label: { fontWeight: "500" },
