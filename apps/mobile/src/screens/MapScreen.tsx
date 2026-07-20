@@ -1,37 +1,45 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Ionicons } from "@expo/vector-icons";
 import MapLibreGL from "@maplibre/maplibre-react-native";
-import { LocationUpdateEvent, MemberLocation } from "@orbit/shared";
-import { useCircle } from "../circle/CircleContext";
+import { Notification } from "@orbit/shared";
 import * as api from "../api/endpoints";
-import { subscribeToCircleEvents } from "../api/sse";
+import { useCircle } from "../circle/CircleContext";
+import { useCircleLocations } from "../hooks/useCircleLocations";
 import { startBackgroundLocationTracking } from "../location/backgroundLocationTask";
 import { MAP_STYLE_URL } from "../config";
 import { MainStackParamList } from "../navigation/RootNavigator";
+import BottomTabBar from "../components/BottomTabBar";
+import MemberStatusLine from "../components/MemberStatusLine";
 import { useTheme } from "../theme/theme";
-import { lastSeenLabel } from "../utils/time";
+import { latestEventsByActor } from "../utils/memberStatus";
 
 export default function MapScreen() {
   const { circle } = useCircle();
   const { colors, spacing, radius, fontSize, shadow } = useTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
-  const [memberLocations, setMemberLocations] = useState<Record<string, MemberLocation>>({});
+  const memberLocations = useCircleLocations(circle?.id);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+      api
+        .listNotifications()
+        .then((result) => {
+          if (isMounted) setNotifications(result);
+        })
+        .catch(() => undefined);
+      return () => {
+        isMounted = false;
+      };
+    }, []),
+  );
 
   useEffect(() => {
-    if (!circle) return;
-    let isMounted = true;
-
-    (async () => {
-      const initial = await api.getLatestLocations(circle.id);
-      if (!isMounted) return;
-      setMemberLocations(Object.fromEntries(initial.map((m) => [m.user.id, m])));
-    })();
-
     startBackgroundLocationTracking()
       .then((result) => {
         if (!result.started) {
@@ -41,23 +49,11 @@ export default function MapScreen() {
       .catch((err) => {
         Alert.alert("Location tracking error", err instanceof Error ? err.message : String(err));
       });
+  }, []);
 
-    let cleanupSse: (() => void) | undefined;
-    (async () => {
-      const onLocationUpdate = (event: LocationUpdateEvent) => {
-        setMemberLocations((prev) => ({ ...prev, [event.user.id]: { user: event.user, ping: event.ping } }));
-      };
-      cleanupSse = await subscribeToCircleEvents(circle.id, onLocationUpdate);
-    })();
-
-    return () => {
-      isMounted = false;
-      cleanupSse?.();
-    };
-  }, [circle?.id]);
-
-  const members = Object.values(memberLocations);
+  const members = Object.values(memberLocations).sort((a, b) => a.user.name.localeCompare(b.user.name));
   const withPing = members.filter((m) => m.ping);
+  const latestByActor = latestEventsByActor(notifications);
 
   if (!circle) return null;
 
@@ -70,54 +66,9 @@ export default function MapScreen() {
           { backgroundColor: colors.card, borderBottomColor: colors.border, paddingTop: insets.top + spacing(3) },
         ]}
       >
-        <View style={styles.headerRow}>
-          <Pressable
-            style={[styles.headerText, styles.headerRowInner]}
-            onPress={() => navigation.navigate("Circles")}
-            hitSlop={8}
-          >
-            <View style={{ flexShrink: 1 }}>
-              <Text style={[styles.circleName, { color: colors.foreground, fontSize: fontSize.lg }]}>
-                {circle.name}
-              </Text>
-              <Text style={[styles.inviteCode, { color: colors.mutedForeground, fontSize: fontSize.sm }]}>
-                Invite code: {circle.inviteCode}
-              </Text>
-            </View>
-            <Ionicons
-              name="chevron-down"
-              size={fontSize.base}
-              color={colors.mutedForeground}
-              style={{ marginLeft: spacing(1) }}
-            />
-          </Pressable>
-          <View style={styles.headerActions}>
-            <Pressable
-              accessibilityLabel="Notifications"
-              onPress={() => navigation.navigate("Notifications")}
-              style={{ marginLeft: spacing(4) }}
-              hitSlop={8}
-            >
-              <Ionicons name="notifications-outline" size={fontSize.xl} color={colors.foreground} />
-            </Pressable>
-            <Pressable
-              accessibilityLabel="Profile"
-              onPress={() => navigation.navigate("Profile")}
-              style={{ marginLeft: spacing(4) }}
-              hitSlop={8}
-            >
-              <Ionicons name="person-circle-outline" size={fontSize.xl} color={colors.foreground} />
-            </Pressable>
-            <Pressable
-              accessibilityLabel="Settings"
-              onPress={() => navigation.navigate("Settings")}
-              style={{ marginLeft: spacing(4) }}
-              hitSlop={8}
-            >
-              <Ionicons name="settings-outline" size={fontSize.xl} color={colors.foreground} />
-            </Pressable>
-          </View>
-        </View>
+        <Text style={[styles.circleName, { color: colors.foreground, fontSize: fontSize.lg }]}>
+          {circle.name} · All members
+        </Text>
       </View>
       <MapLibreGL.MapView style={styles.map} mapStyle={MAP_STYLE_URL}>
         <MapLibreGL.Camera
@@ -127,7 +78,12 @@ export default function MapScreen() {
           }
         />
         {withPing.map(({ user, ping }) => (
-          <MapLibreGL.PointAnnotation key={user.id} id={user.id} coordinate={[ping!.lng, ping!.lat]}>
+          <MapLibreGL.PointAnnotation
+            key={user.id}
+            id={user.id}
+            coordinate={[ping!.lng, ping!.lat]}
+            onSelected={() => navigation.navigate("Person", { userId: user.id })}
+          >
             <View
               style={[
                 styles.pin,
@@ -148,20 +104,19 @@ export default function MapScreen() {
         data={members}
         keyExtractor={(m) => m.user.id}
         renderItem={({ item }) => (
-          <View style={[styles.row, { paddingHorizontal: spacing(4), paddingVertical: spacing(3) }]}>
+          <Pressable
+            onPress={() => navigation.navigate("Person", { userId: item.user.id })}
+            style={[styles.row, { paddingHorizontal: spacing(4), paddingVertical: spacing(3) }]}
+          >
             <Text style={[styles.name, { color: colors.foreground, fontSize: fontSize.base }]}>
               {item.user.name}
             </Text>
-            <Text style={[styles.meta, { color: colors.mutedForeground, fontSize: fontSize.sm }]}>
-              {item.ping
-                ? `${lastSeenLabel(item.ping.recordedAt)}${
-                    item.ping.batteryPct !== null ? ` · ${Math.round(item.ping.batteryPct)}% battery` : ""
-                  }`
-                : "No location yet"}
-            </Text>
-          </View>
+            <MemberStatusLine ping={item.ping} latestEvent={latestByActor[item.user.id]} />
+          </Pressable>
         )}
       />
+
+      <BottomTabBar active="map" />
     </View>
   );
 }
@@ -169,12 +124,7 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   header: { paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: StyleSheet.hairlineWidth },
-  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  headerText: { flexShrink: 1 },
-  headerRowInner: { flexDirection: "row", alignItems: "center" },
-  headerActions: { flexDirection: "row", alignItems: "center" },
   circleName: { fontWeight: "700" },
-  inviteCode: { marginTop: 2 },
   map: { flex: 3 },
   pin: {
     width: 32,
@@ -185,7 +135,6 @@ const styles = StyleSheet.create({
   },
   pinText: { fontWeight: "700" },
   list: { flex: 1, borderTopWidth: StyleSheet.hairlineWidth },
-  row: { flexDirection: "row", justifyContent: "space-between" },
+  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   name: { fontWeight: "600" },
-  meta: {},
 });

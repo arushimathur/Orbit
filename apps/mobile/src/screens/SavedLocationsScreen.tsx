@@ -91,9 +91,6 @@ export default function SavedLocationsScreen() {
                   <Text style={[styles.name, { color: colors.foreground, fontSize: fontSize.base }]}>
                     {item.name}
                   </Text>
-                  <Text style={[styles.radius, { color: colors.mutedForeground, fontSize: fontSize.sm }]}>
-                    {Math.round(item.radiusM)}m radius
-                  </Text>
                 </View>
                 <Pressable
                   accessibilityLabel={`Delete ${item.name}`}
@@ -129,6 +126,5 @@ export default function SavedLocationsScreen() {
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   name: { fontWeight: "600" },
-  radius: { marginTop: 2 },
   empty: { textAlign: "center", marginTop: 24 },
 });

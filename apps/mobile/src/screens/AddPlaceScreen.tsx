@@ -26,7 +26,6 @@ import FormError from "../components/FormError";
 import { useTheme } from "../theme/theme";
 
 const DEFAULT_RADIUS_M = 150;
-const RADIUS_PRESETS = [100, 150, 250, 500];
 const DEFAULT_CENTER: [number, number] = [0, 0];
 const SEARCH_DEBOUNCE_MS = 400;
 
@@ -37,11 +36,11 @@ export default function AddPlaceScreen() {
   const cameraRef = useRef<CameraRef>(null);
   const pinRef = useRef<PointAnnotationRef>(null);
   const nameInputRef = useRef<TextInput>(null);
+  const skipNextSearchRef = useRef(false);
   const [center, setCenter] = useState<[number, number] | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
   const [coordinate, setCoordinate] = useState<[number, number] | null>(null);
   const [name, setName] = useState("");
-  const [radiusM, setRadiusM] = useState(DEFAULT_RADIUS_M);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -92,6 +91,14 @@ export default function AddPlaceScreen() {
   }, [center, isMapReady]);
 
   useEffect(() => {
+    // Selecting a result sets `query` to that result's own display name (so the field shows what
+    // got picked) -- without this guard, that assignment re-triggers this same effect and searches
+    // for the address text itself, reopening the dropdown with near-duplicate results right after
+    // the user just closed it by picking one.
+    if (skipNextSearchRef.current) {
+      skipNextSearchRef.current = false;
+      return;
+    }
     const trimmed = query.trim();
     if (trimmed.length < 3) {
       setResults([]);
@@ -127,6 +134,7 @@ export default function AddPlaceScreen() {
     const next: [number, number] = [result.lng, result.lat];
     setCoordinate(next);
     setName((prev) => prev || result.displayName.split(",")[0]);
+    skipNextSearchRef.current = true;
     setQuery(result.displayName);
     setResults([]);
     cameraRef.current?.setCamera({ centerCoordinate: next, zoomLevel: 15, animationDuration: 700 });
@@ -137,7 +145,7 @@ export default function AddPlaceScreen() {
     setIsSaving(true);
     setError(null);
     try {
-      await api.createPlace({ name: name.trim(), lat: coordinate[1], lng: coordinate[0], radiusM });
+      await api.createPlace({ name: name.trim(), lat: coordinate[1], lng: coordinate[0], radiusM: DEFAULT_RADIUS_M });
       navigation.goBack();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Something went wrong");
@@ -191,40 +199,6 @@ export default function AddPlaceScreen() {
           {coordinate ? "Tap the pin to save, or tap elsewhere on the map to move it" : "Search above or tap the map to drop a pin"}
         </Text>
         <TextField ref={nameInputRef} label="Name" placeholder="Home" value={name} onChangeText={setName} />
-        <Text
-          style={[
-            styles.label,
-            { color: colors.mutedForeground, fontSize: fontSize.sm, marginBottom: spacing(1.5) },
-          ]}
-        >
-          Radius
-        </Text>
-        <View style={[styles.presetsRow, { marginBottom: spacing(4) }]}>
-          {RADIUS_PRESETS.map((preset) => {
-            const isSelected = preset === radiusM;
-            return (
-              <Text
-                key={preset}
-                onPress={() => setRadiusM(preset)}
-                style={[
-                  styles.preset,
-                  {
-                    borderRadius: radius.md,
-                    paddingVertical: spacing(2),
-                    paddingHorizontal: spacing(3),
-                    marginRight: spacing(2),
-                    borderColor: isSelected ? colors.primary : colors.border,
-                    backgroundColor: isSelected ? colors.primary : "transparent",
-                    color: isSelected ? colors.primaryForeground : colors.foreground,
-                    fontSize: fontSize.sm,
-                  },
-                ]}
-              >
-                {preset}m
-              </Text>
-            );
-          })}
-        </View>
 
         {error && <FormError message={error} />}
 
@@ -289,9 +263,6 @@ const styles = StyleSheet.create({
   resultRow: { borderBottomWidth: StyleSheet.hairlineWidth },
   form: {},
   hint: { textAlign: "center" },
-  label: { fontWeight: "500" },
-  presetsRow: { flexDirection: "row" },
-  preset: { borderWidth: 1, fontWeight: "600" },
   pin: {
     width: 24,
     height: 24,

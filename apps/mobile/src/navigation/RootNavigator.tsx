@@ -10,7 +10,9 @@ import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
 import ResetPasswordScreen from "../screens/ResetPasswordScreen";
 import CircleSetupScreen from "../screens/CircleSetupScreen";
 import CirclesScreen from "../screens/CirclesScreen";
+import HomeScreen from "../screens/HomeScreen";
 import MapScreen from "../screens/MapScreen";
+import PersonScreen from "../screens/PersonScreen";
 import NotificationsScreen from "../screens/NotificationsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import SettingsScreen from "../screens/SettingsScreen";
@@ -28,7 +30,9 @@ export type AuthStackParamList = {
 
 export type MainStackParamList = {
   CircleSetup: undefined;
+  Home: undefined;
   Map: undefined;
+  Person: { userId: string };
   Circles: undefined;
   Notifications: undefined;
   Profile: undefined;
@@ -85,7 +89,9 @@ export default function RootNavigator() {
             <MainStack.Screen name="CircleSetup" component={CircleSetupScreen} />
           ) : (
             <>
+              <MainStack.Screen name="Home" component={HomeScreen} />
               <MainStack.Screen name="Map" component={MapScreen} />
+              <MainStack.Screen name="Person" component={PersonScreen} />
               <MainStack.Screen
                 name="Circles"
                 component={CirclesScreen}

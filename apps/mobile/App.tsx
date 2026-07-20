@@ -4,6 +4,7 @@ import * as Notifications from "expo-notifications";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { AuthProvider, useAuth } from "./src/auth/AuthContext";
 import { CircleProvider } from "./src/circle/CircleContext";
+import DevReloadButton from "./src/components/DevReloadButton";
 import RootNavigator from "./src/navigation/RootNavigator";
 import { navigationRef } from "./src/navigation/navigationRef";
 import { registerForPushNotifications } from "./src/notifications/registerForPushNotifications";
@@ -66,6 +67,7 @@ export default function App() {
           <StatusBar style={isDark ? "light" : "dark"} />
           <PushNotificationSync />
           <RootNavigator />
+          {__DEV__ && <DevReloadButton />}
         </CircleProvider>
       </AuthProvider>
     </SafeAreaProvider>

@@ -51,7 +51,7 @@ export default function CirclesScreen() {
     setSwitchingId(circle.id);
     try {
       await setActiveCircle(circle);
-      navigation.navigate("Map");
+      navigation.navigate("Home");
     } finally {
       setSwitchingId(null);
     }
