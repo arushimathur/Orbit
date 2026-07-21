@@ -6,8 +6,10 @@ import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import MapLibreGL from "@maplibre/maplibre-react-native";
 import { Notification } from "@orbit/shared";
+import { useAuth } from "../auth/AuthContext";
 import { useCircle } from "../circle/CircleContext";
 import { useCircleLocations } from "../hooks/useCircleLocations";
+import { useNicknames } from "../hooks/useNicknames";
 import * as api from "../api/endpoints";
 import { MAP_STYLE_URL } from "../config";
 import type { MainStackParamList } from "../navigation/RootNavigator";
@@ -26,11 +28,14 @@ function formatTime(iso: string): string {
 
 export default function PersonScreen({ navigation, route }: Props) {
   const { userId } = route.params;
+  const { user } = useAuth();
   const { circle } = useCircle();
   const { colors, spacing, radius, fontSize, shadow } = useTheme();
   const insets = useSafeAreaInsets();
   const memberLocations = useCircleLocations(circle?.id);
+  const { displayName } = useNicknames();
   const member = memberLocations[userId];
+  const isSelf = userId === user?.id;
   const [events, setEvents] = useState<Notification[]>([]);
   const [expanded, setExpanded] = useState(false);
   const sheetHeight = useRef(new Animated.Value(SHEET_COLLAPSED)).current;
@@ -111,14 +116,23 @@ export default function PersonScreen({ navigation, route }: Props) {
               style={{ marginRight: spacing(3) }}
             />
           </Pressable>
-          <View style={{ flexShrink: 1 }}>
+          <View style={{ flexShrink: 1, flex: 1 }}>
             <Text style={[styles.name, { color: colors.foreground, fontSize: fontSize.lg }]}>
-              {member?.user.name ?? "Member"}
+              {displayName(userId, member?.user.name ?? "Member")}
             </Text>
             <Text style={[styles.subtitle, { color: colors.mutedForeground, fontSize: fontSize.sm }]}>
               {subtitle}
             </Text>
           </View>
+          {!isSelf && member && (
+            <Pressable
+              accessibilityLabel="Rename for yourself"
+              onPress={() => navigation.navigate("RenameMember", { userId, currentName: member.user.name })}
+              hitSlop={8}
+            >
+              <Ionicons name="create-outline" size={fontSize.lg} color={colors.mutedForeground} />
+            </Pressable>
+          )}
         </View>
       </View>
 

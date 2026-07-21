@@ -33,7 +33,7 @@ async function refreshTokens(): Promise<AuthTokens | null> {
 }
 
 interface ApiFetchOptions {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
   auth?: boolean;
 }

@@ -1,5 +1,12 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Post, UseGuards } from "@nestjs/common";
-import { CreateCircleDto, createCircleDtoSchema, JoinCircleDto, joinCircleDtoSchema } from "@orbit/shared";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
+import {
+  CreateCircleDto,
+  createCircleDtoSchema,
+  JoinCircleDto,
+  joinCircleDtoSchema,
+  SetPrecisionDto,
+  setPrecisionDtoSchema,
+} from "@orbit/shared";
 import { CirclesService } from "./circles.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { CurrentUser, AuthenticatedUser } from "../common/current-user.decorator";
@@ -13,6 +20,11 @@ export class CirclesController {
   @Get("mine")
   listMine(@CurrentUser() user: AuthenticatedUser) {
     return this.circlesService.listForUser(user.id);
+  }
+
+  @Get("suggest-code")
+  suggestCode(@Query("name") name: string, @Query("exclude") exclude?: string) {
+    return this.circlesService.suggestInviteCode(name ?? "", exclude).then((code) => ({ code }));
   }
 
   @Post()
@@ -30,9 +42,31 @@ export class CirclesController {
     return this.circlesService.listMembers(circleId, user.id);
   }
 
+  @Patch(":circleId/precision")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  setPrecision(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param("circleId") circleId: string,
+    @Body(new ZodValidationPipe(setPrecisionDtoSchema)) dto: SetPrecisionDto,
+  ) {
+    return this.circlesService.setPrecision(circleId, user.id, dto.precision);
+  }
+
   @Delete(":circleId/members/me")
   @HttpCode(HttpStatus.NO_CONTENT)
   leave(@CurrentUser() user: AuthenticatedUser, @Param("circleId") circleId: string) {
     return this.circlesService.leave(circleId, user.id);
+  }
+}
+
+// Unauthenticated on purpose: shown before a deep-link join is committed. Same trust level
+// as knowing the invite code itself (see CirclesService.getPreview).
+@Controller("circles/preview")
+export class CirclePreviewController {
+  constructor(private readonly circlesService: CirclesService) {}
+
+  @Get(":inviteCode")
+  preview(@Param("inviteCode") inviteCode: string) {
+    return this.circlesService.getPreview(inviteCode);
   }
 }

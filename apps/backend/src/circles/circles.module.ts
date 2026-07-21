@@ -1,9 +1,9 @@
 import { Module } from "@nestjs/common";
-import { CirclesController } from "./circles.controller";
+import { CirclePreviewController, CirclesController } from "./circles.controller";
 import { CirclesService } from "./circles.service";
 
 @Module({
-  controllers: [CirclesController],
+  controllers: [CirclesController, CirclePreviewController],
   providers: [CirclesService],
   exports: [CirclesService],
 })

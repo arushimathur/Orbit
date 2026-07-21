@@ -12,6 +12,8 @@ import {
   resetPasswordDtoSchema,
   UpdatePushTokenDto,
   updatePushTokenDtoSchema,
+  UpdateProfileDto,
+  updateProfileDtoSchema,
 } from "@orbit/shared";
 import { AuthService } from "./auth.service";
 import { ZodValidationPipe } from "../common/zod-validation.pipe";
@@ -61,6 +63,15 @@ export class AuthController {
   async me(@CurrentUser() user: AuthenticatedUser) {
     const record = await this.prisma.user.findUniqueOrThrow({ where: { id: user.id } });
     return toPublicUser(record);
+  }
+
+  @Patch("me")
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body(new ZodValidationPipe(updateProfileDtoSchema)) dto: UpdateProfileDto,
+  ) {
+    return this.authService.updateProfile(user.id, dto);
   }
 
   @Patch("push-token")

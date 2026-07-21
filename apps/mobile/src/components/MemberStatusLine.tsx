@@ -9,12 +9,14 @@ import { memberStatus } from "../utils/memberStatus";
 export default function MemberStatusLine({
   ping,
   latestEvent,
+  sharingPausedUntil,
 }: {
   ping: LocationPing | null;
   latestEvent: Notification | undefined;
+  sharingPausedUntil?: string | null;
 }) {
   const { colors, fontSize } = useTheme();
-  const status = memberStatus(ping, latestEvent);
+  const status = memberStatus(ping, latestEvent, sharingPausedUntil);
   const locationLabel = useReverseGeocodedLabel(
     status.needsLocationLookup ? ping?.lat : undefined,
     status.needsLocationLookup ? ping?.lng : undefined,

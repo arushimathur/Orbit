@@ -15,6 +15,11 @@ enum CircleRole {
   member
 }
 
+enum LocationPrecision {
+  exact
+  city
+}
+
 model User {
   id             String          @id @default(uuid())
   name           String
@@ -22,6 +27,13 @@ model User {
   passwordHash   String
   avatarUrl      String?
   pushToken      String?
+  // Sharing is paused (live position withheld from every circle) while this is in the
+  // future; a far-future sentinel represents an indefinite pause ("Share my location" off).
+  sharingPausedUntil   DateTime?
+  // Edge-trigger guard for low-battery alerts: set when a "below threshold" notification
+  // fires, cleared once battery recovers above the reset threshold, so repeated low pings
+  // don't spam the circle every few seconds.
+  lowBatteryNotifiedAt DateTime?
   createdAt      DateTime        @default(now())
   refreshTokens  RefreshToken[]
   circleMembers  CircleMember[]
@@ -31,6 +43,11 @@ model User {
   savedLocations SavedLocation[]
   placeEventsReceived PlaceEvent[] @relation("PlaceEventRecipient")
   placeEventsTriggered PlaceEvent[] @relation("PlaceEventActor")
+  nicknamesGiven  Nickname[] @relation("NicknameOwner")
+  nicknamesHeld   Nickname[] @relation("NicknameTarget")
+  notificationPreference NotificationPreference?
+  mutedMembers    MutedMember[] @relation("MutedMemberOwner")
+  mutedByOthers   MutedMember[] @relation("MutedMemberTarget")
 }
 
 model RefreshToken {
@@ -71,6 +88,9 @@ model CircleMember {
   circleId String
   userId   String
   role     CircleRole @default(member)
+  // Per (circle, member): lets someone share exact location with their household circle
+  // but only city/area with an extended-family circle.
+  locationPrecision LocationPrecision @default(exact)
   joinedAt DateTime   @default(now())
 
   circle Circle @relation(fields: [circleId], references: [id], onDelete: Cascade)
@@ -104,11 +124,22 @@ model LocationPing {
 // this scale. `isInside` is nullable (not defaulted to false) so the very first
 // ping evaluated after a place is created only records a baseline instead of
 // firing a spurious arrival/departure notification.
+enum PlaceKind {
+  home
+  work
+  custom
+}
+
+// "home"/"work" are per-person special places: every member can save their own, and the
+// circle-wide places list (see PlacesService.listSharedForCircle) groups all members'
+// home/work rows under one shared "Home"/"Work" label that resolves to each person's own
+// address, rather than showing N separately-named identical places.
 model SavedLocation {
   id        String    @id @default(uuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   name      String
+  kind      PlaceKind @default(custom)
   lat       Float
   lng       Float
   radiusM   Float
@@ -123,6 +154,7 @@ model SavedLocation {
 enum PlaceEventType {
   arrived
   left
+  low_battery
 }
 
 // Per-recipient notification row, fanned out to every circle member who shares
@@ -146,4 +178,46 @@ model PlaceEvent {
   readAt          DateTime?
 
   @@index([recipientUserId, createdAt(sort: Desc)])
+}
+
+// Private to the viewer ("ownerId"): how *I* refer to a circle member, e.g. Rahul -> "Papa".
+// Never visible to anyone else, including the person nicknamed.
+model Nickname {
+  id           String   @id @default(uuid())
+  ownerId      String
+  owner        User     @relation("NicknameOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  targetUserId String
+  target       User     @relation("NicknameTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  nickname     String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([ownerId, targetUserId])
+}
+
+// One row per user, upserted on first write. Global "tell me when..." toggles plus quiet
+// hours; per-person muting lives in MutedMember below rather than as an array column so
+// it stays queryable/indexable.
+model NotificationPreference {
+  userId            String   @id
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifyArrivals    Boolean  @default(true)
+  notifyLowBattery  Boolean  @default(true)
+  // Stored/exposed for UI parity with the design, not wired to any real lateness
+  // detection yet (no such model exists) -- defaults off, same as the design mockup.
+  notifyRunningLate Boolean  @default(false)
+  // Plain "HH:mm", compared against server UTC time -- see NotificationsService.
+  quietHoursStart   String?
+  quietHoursEnd     String?
+  updatedAt         DateTime @updatedAt
+}
+
+// Per-viewer mute of a specific circle member's arrival/departure/low-battery alerts.
+model MutedMember {
+  ownerId     String
+  owner       User   @relation("MutedMemberOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  mutedUserId String
+  mutedUser   User   @relation("MutedMemberTarget", fields: [mutedUserId], references: [id], onDelete: Cascade)
+
+  @@id([ownerId, mutedUserId])
 }

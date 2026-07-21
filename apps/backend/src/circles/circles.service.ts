@@ -1,20 +1,25 @@
-import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
-import { Circle, CircleMember, CreateCircleDto, JoinCircleDto } from "@orbit/shared";
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
+import { Circle, CircleMember, CirclePreview, CreateCircleDto, JoinCircleDto, LocationPrecision } from "@orbit/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { toPublicUser } from "../common/public-user.mapper";
 
 const INVITE_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I to avoid ambiguity
+const MIN_DERIVED_CODE_LETTERS = 3;
 
 @Injectable()
 export class CirclesService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateCircleDto): Promise<Circle> {
+    const inviteCode = dto.inviteCode
+      ? await this.claimInviteCode(dto.inviteCode)
+      : await this.generateInviteCode(dto.name);
+
     const circle = await this.prisma.circle.create({
       data: {
         name: dto.name,
         createdBy: userId,
-        inviteCode: await this.generateUniqueInviteCode(),
+        inviteCode,
         members: {
           create: { userId, role: "owner" },
         },
@@ -22,6 +27,51 @@ export class CirclesService {
     });
 
     return this.toCircle(circle);
+  }
+
+  // GET /circles/suggest-code -- onboarding preview, called once for the name-derived code
+  // and again (with `exclude`) each time the user taps "regenerate".
+  async suggestInviteCode(name: string, exclude?: string): Promise<string> {
+    const derived = this.deriveCodeFromName(name);
+    if (derived && derived !== exclude && !(await this.codeTaken(derived))) {
+      return derived;
+    }
+    return this.randomAvailableCode(exclude);
+  }
+
+  private async claimInviteCode(code: string): Promise<string> {
+    if (await this.codeTaken(code)) {
+      throw new ConflictException("That invite code was just taken -- try another");
+    }
+    return code;
+  }
+
+  private async generateInviteCode(name: string): Promise<string> {
+    const derived = this.deriveCodeFromName(name);
+    if (derived && !(await this.codeTaken(derived))) {
+      return derived;
+    }
+    return this.randomAvailableCode();
+  }
+
+  private deriveCodeFromName(name: string): string | null {
+    const firstWord = name.trim().split(/\s+/)[0] ?? "";
+    const letters = firstWord.replace(/[^a-zA-Z]/g, "").toUpperCase();
+    if (letters.length < MIN_DERIVED_CODE_LETTERS) return null;
+    return letters.slice(0, 10);
+  }
+
+  private async codeTaken(code: string): Promise<boolean> {
+    return (await this.prisma.circle.findUnique({ where: { inviteCode: code } })) !== null;
+  }
+
+  private async randomAvailableCode(exclude?: string): Promise<string> {
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const code = this.randomInviteCode();
+      if (code === exclude) continue;
+      if (!(await this.codeTaken(code))) return code;
+    }
+    throw new Error("Failed to generate a unique invite code");
   }
 
   async join(userId: string, dto: JoinCircleDto): Promise<Circle> {
@@ -52,9 +102,36 @@ export class CirclesService {
       circleId: m.circleId,
       userId: m.userId,
       role: m.role,
+      locationPrecision: m.locationPrecision,
       joinedAt: m.joinedAt.toISOString(),
       user: toPublicUser(m.user),
     }));
+  }
+
+  async setPrecision(circleId: string, userId: string, precision: LocationPrecision): Promise<void> {
+    await this.assertMembership(circleId, userId);
+    await this.prisma.circleMember.update({
+      where: { circleId_userId: { circleId, userId } },
+      data: { locationPrecision: precision },
+    });
+  }
+
+  // Unauthenticated preview shown before a deep-link join is committed -- same trust level
+  // as knowing the invite code itself.
+  async getPreview(inviteCode: string): Promise<CirclePreview> {
+    const circle = await this.prisma.circle.findUnique({
+      where: { inviteCode },
+      include: { members: { include: { user: true }, orderBy: { joinedAt: "asc" }, take: 3 } },
+    });
+    if (!circle) {
+      throw new NotFoundException("No circle found for that invite code");
+    }
+    const memberCount = await this.prisma.circleMember.count({ where: { circleId: circle.id } });
+    return {
+      name: circle.name,
+      memberCount,
+      memberInitials: circle.members.map((m) => m.user.name.slice(0, 1).toUpperCase()),
+    };
   }
 
   /** Throws if the user is not a member of the circle. Reused by locations endpoints and the realtime gateway. */
@@ -104,15 +181,6 @@ export class CirclesService {
       orderBy: { joinedAt: "asc" },
     });
     return memberships.map((m) => this.toCircle(m.circle));
-  }
-
-  private async generateUniqueInviteCode(): Promise<string> {
-    for (let attempt = 0; attempt < 10; attempt++) {
-      const code = this.randomInviteCode();
-      const existing = await this.prisma.circle.findUnique({ where: { inviteCode: code } });
-      if (!existing) return code;
-    }
-    throw new Error("Failed to generate a unique invite code");
   }
 
   private randomInviteCode(): string {

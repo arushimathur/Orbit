@@ -23,9 +23,25 @@ export class PlacesController {
     return this.placesService.listForUser(user.id);
   }
 
+  @Get("suggestions")
+  suggestions(@CurrentUser() user: AuthenticatedUser) {
+    return this.placesService.suggestPlaces(user.id);
+  }
+
   @Delete(":id")
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(@CurrentUser() user: AuthenticatedUser, @Param("id") id: string) {
     return this.placesService.delete(user.id, id);
+  }
+}
+
+@Controller("circles/:circleId/places")
+@UseGuards(JwtAuthGuard)
+export class CirclePlacesController {
+  constructor(private readonly placesService: PlacesService) {}
+
+  @Get()
+  list(@CurrentUser() user: AuthenticatedUser, @Param("circleId") circleId: string) {
+    return this.placesService.listSharedForCircle(circleId, user.id);
   }
 }

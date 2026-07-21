@@ -7,9 +7,11 @@ import {
   AuthTokens,
   ForgotPasswordDto,
   LoginDto,
+  PublicUser,
   RefreshDto,
   RegisterDto,
   ResetPasswordDto,
+  UpdateProfileDto,
 } from "@orbit/shared";
 import { PrismaService } from "../prisma/prisma.service";
 import { toPublicUser } from "../common/public-user.mapper";
@@ -122,6 +124,14 @@ export class AuthService {
 
   async updatePushToken(userId: string, pushToken: string): Promise<void> {
     await this.prisma.user.update({ where: { id: userId }, data: { pushToken } });
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto): Promise<PublicUser> {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { name: dto.name, avatarUrl: dto.avatarUrl },
+    });
+    return toPublicUser(user);
   }
 
   private async issueTokens(userId: string): Promise<AuthTokens> {

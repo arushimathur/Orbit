@@ -9,6 +9,8 @@ interface AuthContextValue {
   login: (dto: LoginDto) => Promise<void>;
   register: (dto: RegisterDto) => Promise<void>;
   logout: () => Promise<void>;
+  // Updates the cached user in place (e.g. after PATCH /auth/me) without a full re-fetch.
+  setUserOverride: (user: PublicUser) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -44,6 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await api.logout();
         setUser(null);
       },
+      setUserOverride: setUser,
     }),
     [user, isLoading],
   );

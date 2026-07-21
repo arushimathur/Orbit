@@ -13,8 +13,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Location from "expo-location";
 import MapLibreGL, { CameraRef, PointAnnotationRef } from "@maplibre/maplibre-react-native";
-import { useNavigation } from "@react-navigation/native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { PlaceKind } from "@orbit/shared";
 import * as api from "../api/endpoints";
 import { ApiError } from "../api/client";
 import { GeocodeResult, searchPlaces } from "../api/geocoding";
@@ -29,8 +30,20 @@ const DEFAULT_RADIUS_M = 150;
 const DEFAULT_CENTER: [number, number] = [0, 0];
 const SEARCH_DEBOUNCE_MS = 400;
 
+// Quick-label chips (frame 2a): tapping one fills the label (and, for Home/Work, the
+// special per-person `kind`) so the user's only job is confirming the pin, not typing.
+const QUICK_LABELS: { label: string; icon: string; kind: PlaceKind }[] = [
+  { label: "Gym", icon: "🏋️", kind: "custom" },
+  { label: "Restaurant", icon: "🍽️", kind: "custom" },
+  { label: "Grandma's", icon: "👵", kind: "custom" },
+  { label: "Temple", icon: "🛕", kind: "custom" },
+  { label: "Home", icon: "🏠", kind: "home" },
+  { label: "Work", icon: "💼", kind: "work" },
+];
+
 export default function AddPlaceScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<MainStackParamList>>();
+  const route = useRoute<RouteProp<MainStackParamList, "AddPlace">>();
   const { colors, spacing, radius, fontSize, shadow } = useTheme();
   const insets = useSafeAreaInsets();
   const cameraRef = useRef<CameraRef>(null);
@@ -39,8 +52,13 @@ export default function AddPlaceScreen() {
   const skipNextSearchRef = useRef(false);
   const [center, setCenter] = useState<[number, number] | null>(null);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [coordinate, setCoordinate] = useState<[number, number] | null>(null);
-  const [name, setName] = useState("");
+  const [coordinate, setCoordinate] = useState<[number, number] | null>(
+    route.params?.prefillLat !== undefined && route.params?.prefillLng !== undefined
+      ? [route.params.prefillLng, route.params.prefillLat]
+      : null,
+  );
+  const [name, setName] = useState<string>(route.params?.prefillName ?? "");
+  const [kind, setKind] = useState<PlaceKind>(route.params?.kind ?? "custom");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +67,12 @@ export default function AddPlaceScreen() {
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
+    // A prefilled suggestion already has coordinates -- center there directly instead of
+    // waiting on a fresh GPS fix.
+    if (coordinate) {
+      setCenter(coordinate);
+      return;
+    }
     let isMounted = true;
     (async () => {
       // A cached fix (near-instant) lets the map mount already centered in the common case --
@@ -145,13 +169,18 @@ export default function AddPlaceScreen() {
     setIsSaving(true);
     setError(null);
     try {
-      await api.createPlace({ name: name.trim(), lat: coordinate[1], lng: coordinate[0], radiusM: DEFAULT_RADIUS_M });
+      await api.createPlace({ name: name.trim(), kind, lat: coordinate[1], lng: coordinate[0], radiusM: DEFAULT_RADIUS_M });
       navigation.goBack();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Something went wrong");
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const onQuickLabel = (chip: (typeof QUICK_LABELS)[number]) => {
+    setName(chip.label);
+    setKind(chip.kind);
   };
 
   return (
@@ -199,6 +228,30 @@ export default function AddPlaceScreen() {
           {coordinate ? "Tap the pin to save, or tap elsewhere on the map to move it" : "Search above or tap the map to drop a pin"}
         </Text>
         <TextField ref={nameInputRef} label="Name" placeholder="Home" value={name} onChangeText={setName} />
+
+        <View style={styles.chipRow}>
+          {QUICK_LABELS.map((chip) => (
+            <Pressable
+              key={chip.label}
+              onPress={() => onQuickLabel(chip)}
+              style={[
+                styles.chip,
+                {
+                  borderColor: name === chip.label ? colors.primary : colors.border,
+                  borderRadius: radius.full,
+                  marginRight: spacing(2),
+                  marginBottom: spacing(2),
+                  paddingVertical: spacing(1.5),
+                  paddingHorizontal: spacing(3),
+                },
+              ]}
+            >
+              <Text style={{ fontSize: fontSize.sm, color: colors.foreground }}>
+                {chip.icon} {chip.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
 
         {error && <FormError message={error} />}
 
@@ -253,6 +306,8 @@ export default function AddPlaceScreen() {
 }
 
 const styles = StyleSheet.create({
+  chipRow: { flexDirection: "row", flexWrap: "wrap", marginTop: -4 },
+  chip: { borderWidth: 1 },
   container: { flex: 1 },
   mapContainer: { flex: 1 },
   map: { flex: 1 },

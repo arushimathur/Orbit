@@ -14,7 +14,7 @@ export function latestEventsByActor(notifications: Notification[]): Record<strin
 }
 
 export interface MemberStatus {
-  icon: "home-outline" | "car-outline" | "location-outline" | "help-circle-outline";
+  icon: "home-outline" | "car-outline" | "location-outline" | "help-circle-outline" | "pause-circle-outline";
   // A known saved-place name ("Home", "Office"); empty when we only have raw coordinates and the
   // caller should fill in a reverse-geocoded label instead (see `needsLocationLookup`).
   headline: string;
@@ -26,7 +26,23 @@ export interface MemberStatus {
 
 const LOW_BATTERY_PCT = 20;
 
-export function memberStatus(ping: LocationPing | null, latestEvent: Notification | undefined): MemberStatus {
+export function memberStatus(
+  ping: LocationPing | null,
+  latestEvent: Notification | undefined,
+  sharingPausedUntil?: string | null,
+): MemberStatus {
+  // "Privacy without secrecy" -- the circle sees that sharing is paused, never a blank map.
+  if (sharingPausedUntil) {
+    return {
+      icon: "pause-circle-outline",
+      headline: "Paused sharing",
+      time: null,
+      battery: null,
+      isLowBattery: false,
+      needsLocationLookup: false,
+    };
+  }
+
   if (!ping) {
     return {
       icon: "help-circle-outline",

@@ -9,3 +9,9 @@ export const publicUserSchema = z.object({
 });
 
 export type PublicUser = z.infer<typeof publicUserSchema>;
+
+export const updateProfileDtoSchema = z.object({
+  name: z.string().min(1).max(80).optional(),
+  avatarUrl: z.string().url().nullable().optional(),
+});
+export type UpdateProfileDto = z.infer<typeof updateProfileDtoSchema>;

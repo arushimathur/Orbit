@@ -20,7 +20,10 @@ export function useCircleLocations(circleId: string | undefined): Record<string,
     let cleanupSse: (() => void) | undefined;
     (async () => {
       const onLocationUpdate = (event: LocationUpdateEvent) => {
-        setMemberLocations((prev) => ({ ...prev, [event.user.id]: { user: event.user, ping: event.ping } }));
+        setMemberLocations((prev) => ({
+          ...prev,
+          [event.user.id]: { user: event.user, ping: event.ping, sharingPausedUntil: event.sharingPausedUntil ?? null },
+        }));
       };
       cleanupSse = await subscribeToCircleEvents(circleId, onLocationUpdate);
     })();

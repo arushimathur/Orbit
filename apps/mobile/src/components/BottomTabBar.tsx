@@ -7,12 +7,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { MainStackParamList } from "../navigation/RootNavigator";
 import { useTheme } from "../theme/theme";
 
-export type TabKey = "family" | "map" | "places" | "alerts";
+export type TabKey = "family" | "alerts";
 
 const TABS: { key: TabKey; label: string; icon: keyof typeof Ionicons.glyphMap; screen: keyof MainStackParamList }[] = [
   { key: "family", label: "Family", icon: "people", screen: "Home" },
-  { key: "map", label: "Map", icon: "map", screen: "Map" },
-  { key: "places", label: "Places", icon: "flag", screen: "SavedLocations" },
   { key: "alerts", label: "Alerts", icon: "notifications", screen: "Notifications" },
 ];
 

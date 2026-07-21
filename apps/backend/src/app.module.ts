@@ -7,6 +7,9 @@ import { LocationsModule } from "./locations/locations.module";
 import { RealtimeModule } from "./realtime/realtime.module";
 import { PlacesModule } from "./places/places.module";
 import { PushModule } from "./push/push.module";
+import { SharingModule } from "./sharing/sharing.module";
+import { NicknamesModule } from "./nicknames/nicknames.module";
+import { PreferencesModule } from "./preferences/preferences.module";
 
 @Module({
   imports: [
@@ -22,6 +25,9 @@ import { PushModule } from "./push/push.module";
     RealtimeModule,
     PlacesModule,
     PushModule,
+    SharingModule,
+    NicknamesModule,
+    PreferencesModule,
   ],
 })
 export class AppModule {}

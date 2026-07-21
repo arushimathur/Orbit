@@ -113,12 +113,15 @@ export default function CirclesScreen() {
                   disabled={isBusy}
                   hitSlop={8}
                 >
-                  <View style={{ flexShrink: 1 }}>
+                  <View style={[styles.icon, { backgroundColor: colors.accent, borderRadius: radius.full, marginRight: spacing(3) }]}>
+                    <Ionicons name="people" size={fontSize.lg} color={colors.accentForeground} />
+                  </View>
+                  <View style={{ flex: 1 }}>
                     <Text style={[styles.name, { color: colors.foreground, fontSize: fontSize.base }]}>
                       {item.name}
                     </Text>
                     <Text style={[styles.code, { color: colors.mutedForeground, fontSize: fontSize.sm }]}>
-                      Invite code: {item.inviteCode}
+                      {isActive ? "Active · " : ""}Invite code: {item.inviteCode}
                     </Text>
                   </View>
                   {switchingId === item.id ? (
@@ -165,7 +168,8 @@ export default function CirclesScreen() {
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center" },
-  rowMain: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  rowMain: { flex: 1, flexDirection: "row", alignItems: "center" },
+  icon: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   name: { fontWeight: "600" },
   code: { marginTop: 2 },
   empty: { textAlign: "center", marginTop: 24 },

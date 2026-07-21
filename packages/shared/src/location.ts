@@ -15,9 +15,12 @@ export const locationPingSchema = z.object({
 export type LocationPing = z.infer<typeof locationPingSchema>;
 
 // What the member list / live map render: the latest ping joined with the user it belongs to.
+// `sharingPausedUntil` is set (and `ping` withheld) while the member has paused sharing --
+// the raw ping is still recorded server-side, just not surfaced to the circle.
 export const memberLocationSchema = z.object({
   user: publicUserSchema,
   ping: locationPingSchema.nullable(),
+  sharingPausedUntil: z.string().datetime().nullable().optional(),
 });
 export type MemberLocation = z.infer<typeof memberLocationSchema>;
 

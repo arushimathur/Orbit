@@ -3,6 +3,7 @@
     "name": "Orbit",
     "slug": "orbit",
     "version": "0.1.0",
+    "scheme": "orbit",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "splash": {
